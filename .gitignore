@@ -1,0 +1,109 @@
+# ======================
+# 🐍 Python Artifacts
+# ======================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.build/
+dist/
+build/
+*.spec
+
+# ======================
+# 🧪 Virtual Environments
+# ======================
+.venv/
+venv/
+.conda/
+.ipynb_checkpoints/
+
+# ======================
+# 🔐 Environment Files
+# ======================
+.env
+.env.*
+!.env.example
+
+# ======================
+# ⚙️ OS / IDE
+# ======================
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ======================
+# 📦 App Data / Temp / Logs
+# ======================
+logs/
+tmp/
+cache/
+*.log
+app/__pycache__/
+scripts/__pycache__/
+tests/__pycache__/
+ui/__pycache__/
+
+# מסדי נתונים לוקאליים (נוצרים בזמן ריצה)
+app/db/*.sqlite
+app/db/*.db
+app/db/*.bak
+
+# ======================
+# 🧰 Streamlit & UI
+# ======================
+.streamlit/
+.ui_state/
+ui/.streamlit/secrets.toml
+ui/.streamlit/*.json
+ui/.cache/
+ui/tmp/
+
+# שומרים קונפיג בלבד (לא מכיל מידע רגיש)
+!ui/.streamlit/config.toml
+
+# ======================
+# 🧪 Tests & Reports
+# ======================
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+test_results/
+.tox/
+
+# ======================
+# 🧩 Linters & Type Checkers
+# ======================
+.mypy_cache/
+.ruff_cache/
+
+# ======================
+# 🤖 Model / Ollama Cache
+# ======================
+ollama_models/
+ollama_cache/
+*.bin
+*.pt
+*.ckpt
+
+# ======================
+# 🔧 Local Dev Tools / Outputs
+# ======================
+.preflight_results.json
+.local/
+.env.local
+
+# ======================
+# 📄 Documentation outputs
+# ======================
+*.pdf
+*.docx
+*.rtf
+*.xlsx
+*.csv
+*.tmp
+*.bak
