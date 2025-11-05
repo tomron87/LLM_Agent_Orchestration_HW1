@@ -1,14 +1,11 @@
-<div dir="rtl">
+# 🏗️ Architecture — HW1_ai_chat_bot
 
-# 🏗️ ארכיטקטורה — HW1_ai_chat_bot
-
-המסמך מציג את מבנה הארכיטקטורה של המערכת — **Backend** ו־**Frontend** — תוך הדגשת תפקידים, זרימת מידע, אבטחה, משתני סביבה ובדיקות.  
-המסמך ממוקד בארכיטקטורה ואינו כולל הוראות התקנה מפורטות.
+This document presents the system architecture — **Backend** and **Frontend** — highlighting roles, data flow, security, environment variables, and testing.
+The document focuses on architecture and does not include detailed installation instructions.
 
 ---
 
-## ⚙️ מבנה תיקיות מלא
-<div dir="ltr">
+## ⚙️ Complete Directory Structure
 
 ```
 HW1_ai_chat_bot/
@@ -48,63 +45,62 @@ HW1_ai_chat_bot/
 ```
 
 ---
-<div dir="rtl">
 
-## 🧩 רכיבי המערכת ותפקידם
+## 🧩 System Components and Roles
 
 ### 🖥️ Backend (FastAPI)
 
-| רכיב | תפקיד |
+| Component | Role |
 |------|--------|
-| `app/main.py` | נקודת כניסה; יצירת מופע FastAPI ורישום הנתיבים (`/api/health`, `/api/chat`). |
-| `app/api/routers/chat.py` | שכבת HTTP: סכימות Pydantic (`ChatMessage`, `ChatRequest`, `ChatResponse`), ניתוב, טיפול בשגיאות ל-HTTP. |
-| `app/api/deps.py` | אימות גישה מבוסס Bearer Token (`require_api_key`). |
-| `app/services/chat_service.py` | לוגיקה עסקית: בדיקת קיום מודל, קריאה ל־`ollama_client`, איסוף/איחוד תוצאה לפורמט אחיד (answer/notice). |
-| `app/services/ollama_client.py` | שכבת תקשורת HTTP ל־Ollama (`ping`, `has_model`, `chat`) עם טיפול בשגיאות/timeout. |
-| `app/core/config.py` | ניהול קונפיגורציה וטעינת `.env` למשתני סביבה. |
+| `app/main.py` | Entry point; creates FastAPI instance and registers routes (`/api/health`, `/api/chat`). |
+| `app/api/routers/chat.py` | HTTP layer: Pydantic schemas (`ChatMessage`, `ChatRequest`, `ChatResponse`), routing, error handling to HTTP. |
+| `app/api/deps.py` | Bearer Token-based access authentication (`require_api_key`). |
+| `app/services/chat_service.py` | Business logic: model existence checking, calling `ollama_client`, collecting/unifying results into a unified format (answer/notice). |
+| `app/services/ollama_client.py` | HTTP communication layer to Ollama (`ping`, `has_model`, `chat`) with error/timeout handling. |
+| `app/core/config.py` | Configuration management and loading `.env` to environment variables. |
 
-#### לוגיקת זרימה עיקרית:
-1. **המשתמש שולח בקשה** → `/api/chat`
-2. **ה־API** מאמת את הכניסה (`require_api_key`), בודק את מבנה הבקשה (`ChatRequest`).
-3. **ה־ChatService**:
-   - בודק אם המודל קיים (`has_model`)
-   - אם לא — מחזיר notice (מודל לא מותקן)
-   - אם כן — קורא ל־`ollama_client.chat()` לקבלת תשובה
-4. **OllamaClient** מתקשר עם השרת המקומי (`OLLAMA_HOST/api/chat`)
-5. **ה־API** מחזיר תשובה מובנית (JSON עם `answer`, `model`, `session_id`, ו־`notice` אם נדרש).
+#### Main Flow Logic:
+1. **User sends request** → `/api/chat`
+2. **API** authenticates entry (`require_api_key`), checks request structure (`ChatRequest`).
+3. **ChatService**:
+   - Checks if model exists (`has_model`)
+   - If not — returns notice (model not installed)
+   - If yes — calls `ollama_client.chat()` to get response
+4. **OllamaClient** communicates with local server (`OLLAMA_HOST/api/chat`)
+5. **API** returns structured response (JSON with `answer`, `model`, `session_id`, and `notice` if needed).
 
 ---
 
 ### 💬 Frontend (Streamlit)
 
-| רכיב | תפקיד |
+| Component | Role |
 |------|--------|
-| `ui/streamlit_app.py` | חלון צ'אט; קריאות HTTP ל־`API_URL`; מציג תשובת מודל/`notice`. |
-| `.env → API_URL` | יעד קריאה ל־API (`http://127.0.0.1:8000/api/chat` כברירת מחדל). |
+| `ui/streamlit_app.py` | Chat window; HTTP calls to `API_URL`; displays model response/`notice`. |
+| `.env → API_URL` | API call destination (`http://127.0.0.1:8000/api/chat` by default). |
 
-#### זרימת עבודה ב־UI:
-1. המשתמש מקליד הודעה ולוחץ “Send”
-2. ה־Streamlit שולח בקשת POST ל־API_URL
-3. התשובה מוצגת בצד ימין/שמאל בהתאם ל־role
-4. במידה והמודל לא מותקן, מוצגת הודעת `notice` מתאימה למשתמש
+#### UI Workflow:
+1. User types message and clicks "Send"
+2. Streamlit sends POST request to API_URL
+3. Response is displayed on right/left side according to role
+4. If model is not installed, appropriate `notice` message is displayed to the user
 
 ---
-## 🔁 תרשים זרימת מידע
+## 🔁 Data Flow Diagram
 
 ```text
 [User / Streamlit UI]
        │  (HTTP POST /api/chat, Bearer)
        ▼
-[FastAPI Router (chat.py)]  — ולידציה + מיפוי שגיאות
+[FastAPI Router (chat.py)]  — Validation + error mapping
        │
        ▼
-[ChatService]  — בדיקת מודל, בחירת מודל, קריאה ללקוח
+[ChatService]  — Model checking, model selection, call to client
        │
        ▼
-[OllamaClient] — HTTP ל־{OLLAMA_HOST}/api/chat
+[OllamaClient] — HTTP to {OLLAMA_HOST}/api/chat
        │
        ▼
-[Ollama Server]  — יצירת טקסט
+[Ollama Server]  — Text generation
        │
        ▼
 [API JSON]  — {session_id, answer, model, notice?}
@@ -112,74 +108,70 @@ HW1_ai_chat_bot/
 
 ---
 
-## 🌱 משתני סביבה (Environment)
+## 🌱 Environment Variables
 
-| מפתח | שימוש | ברירת מחדל/דוגמה |
+| Key | Usage | Default/Example |
 |------|-------|-------------------|
-| `APP_API_KEY` | טוקן ל־Bearer עבור `/api/chat` | אין ברירת מחדל תקפה (יש להציב ערך אמיתי) |
-| `OLLAMA_HOST` | בסיס כתובת שרת Ollama | `http://127.0.0.1:11434` |
-| `OLLAMA_MODEL` | שם המודל המקומי לשימוש | `phi` (או `mistral`/אחר) |
-| `API_URL` | יעד קריאה של ה־UI ל־API | `http://127.0.0.1:8000/api/chat` |
+| `APP_API_KEY` | Bearer token for `/api/chat` | No valid default (must set a real value) |
+| `OLLAMA_HOST` | Ollama server base URL | `http://127.0.0.1:11434` |
+| `OLLAMA_MODEL` | Local model name to use | `phi` (or `mistral`/other) |
+| `API_URL` | UI's API call destination | `http://127.0.0.1:8000/api/chat` |
 
-> המפתחות נטענים ב־`app/core/config.py`; אין לשמור סודות בקוד/גיט. 
+> Keys are loaded in `app/core/config.py`; do not store secrets in code/git.
 
-> המערכת לא תעלה אם אחד מהמשתנים חסר.
+> The system will not start if any variable is missing.
 
 ---
 
-## 🧪 בדיקות (QA) — תקציר ארכיטקטוני
+## 🧪 Testing (QA) — Architectural Summary
 
-| קובץ / רכיב | תפקיד עיקרי |
+| File / Component | Main Role |
 |--------------|--------------|
-| `tests/` | כולל בדיקות יחידה ואינטגרציה לכל שכבות המערכת. |
-| `tests/test_*.py` | טסטי API, ולידציה, הגדרות וקונפיגורציה. |
-| `tests/test_ollama_client_unit.py` | בדיקות יחידה לשכבת תקשורת (OllamaClient) — ללא שרת אמיתי. |
-| `tests/test_ollama_models_integration.py` | בדיקות אינטגרציה מול שרת Ollama מקומי (`ping`, קיום מודלים). |
-| `tests/conftest.py` | Fixtures משותפים, פורמט פלט אחיד, ניהול expected/actual. |
-| `pytest.ini` | מגדיר מרקר יחיד `integration` ופרמטרים גלובליים להרצה. |
-| `scripts/preflight.py` | מאמת תקינות סביבה (Python, חבילות, Ollama, משתני סביבה). |
+| `tests/` | Includes unit and integration tests for all system layers. |
+| `tests/test_*.py` | API tests, validation, settings and configuration. |
+| `tests/test_ollama_client_unit.py` | Unit tests for communication layer (OllamaClient) — without real server. |
+| `tests/test_ollama_models_integration.py` | Integration tests against local Ollama server (`ping`, model existence). |
+| `tests/conftest.py` | Shared fixtures, unified output format, expected/actual management. |
+| `pytest.ini` | Defines single `integration` marker and global run parameters. |
+| `scripts/preflight.py` | Validates environment health (Python, packages, Ollama, environment variables). |
 
-#### כלי פיתוח ובדיקות
-- **Makefile** – מרכז את כל תהליך ההפעלה והבדיקות (כולל `preflight`, `install`, `ollama`, `api`, `ui`, ו־`test`) ומבטיח הרצה עקבית בכל סביבה.
-- **Pytest markers** – מאפשרים סינון בין סוגי בדיקות:
-  - `pytest -m "not integration"` — להרצת בדיקות יחידה בלבד.  
-  - `pytest -m integration` — להרצת בדיקות אינטגרציה מול שרת אמיתי.
-- **Preflight Script** – חלק מתהליך ה־QA; מבטיח שסביבה תקינה לפני הפעלה או בדיקה.
+#### Development and Testing Tools
+- **Makefile** – Centralizes the entire startup and testing process (including `preflight`, `install`, `ollama`, `api`, `ui`, and `test`) and ensures consistent execution in any environment.
+- **Pytest markers** – Enable filtering between test types:
+  - `pytest -m "not integration"` — Run unit tests only.
+  - `pytest -m integration` — Run integration tests against real server.
+- **Preflight Script** – Part of QA process; ensures healthy environment before startup or testing.
 
-> שכבת הבדיקות וה־Makefile מהוות חלק אינטגרלי מהארכיטקטורה, ומבטיחות תהליך QA יציב, אחיד ובר־שחזור בכל סביבת הרצה.
+> The testing layer and Makefile are integral parts of the architecture, ensuring a stable, consistent, and reproducible QA process in any execution environment.
 ---
 
-## 🔐 אבטחה (Security)
+## 🔐 Security
 
-- **אימות**: כל קריאת `/api/chat` דורשת `Authorization: Bearer <APP_API_KEY>`; בדיקה מתבצעת ב־`require_api_key`.
-- **סודות בקוד**: אין ערכים קשיחים; ערכי מפתח נטענים מ־`.env` דרך `app/core/config.py`.
-- **שגיאות/לוגים**: מיפוי חריגות לשגיאות HTTP (401/404/5xx); לוגים ב־`ollama_client` ו־`chat.py` ללא הדלפת סודות.
-- **ולידציה**: סכימות Pydantic אוכפות מבנה/טיפוסים; מגנות מפני קלט שגוי.
-- **הקשחה אפשרית (בעתיד)**: rate limiting, CORS מדויק, הגבלת גודל בקשה, sanitization, ו־audit logs.
+- **Authentication**: Every `/api/chat` call requires `Authorization: Bearer <APP_API_KEY>`; verification performed in `require_api_key`.
+- **Secrets in code**: No hardcoded values; key values loaded from `.env` through `app/core/config.py`.
+- **Errors/logs**: Mapping exceptions to HTTP errors (401/404/5xx); logs in `ollama_client` and `chat.py` without leaking secrets.
+- **Validation**: Pydantic schemas enforce structure/types; protect against bad input.
+- **Possible hardening (future)**: rate limiting, precise CORS, request size limiting, sanitization, and audit logs.
 
 ---
 
-## 🚀 הרחבות עתידיות (Future Extensions)
+## 🚀 Future Extensions
 
-- **Streaming** של תשובה (SSE/WebSocket) ו־partial tokens.
-- **ניהול שיחות**: זיכרון/אחסון session history (DB פשוט/Redis).
-- **Multi‑Model Routing**: בחירה דינמית של מודל לפי מצב/עלות/latency.
-- **רובסטיות**: מנגנון retry/backoff, circuit breaker, timeouts פר־שכבה.
+- **Streaming** responses (SSE/WebSocket) and partial tokens.
+- **Conversation management**: Memory/storage of session history (simple DB/Redis).
+- **Multi-Model Routing**: Dynamic model selection based on state/cost/latency.
+- **Robustness**: retry/backoff mechanism, circuit breaker, per-layer timeouts.
 - **Observability**: Structured logging, metrics (Prometheus), tracing (OTEL).
-- **אבטחה**: rate limiting, קוהורט הרשאות, CORS, הגבלת גודל הודעה.
-- **Caching**: תשובות זהות/דומות (embeddings+cache).
-- **RAG אופציונלי**: אינדקס מסמכים, חיפוש סמנטי (FAISS/Chroma), חיבור ל־LangChain/ LangGraph.
-- **UI**: היסטוריית שיחות, העלאת קבצים, חיווי סטטוס מודל.
+- **Security**: rate limiting, permission cohorts, CORS, message size limiting.
+- **Caching**: Identical/similar responses (embeddings+cache).
+- **Optional RAG**: Document indexing, semantic search (FAISS/Chroma), connection to LangChain/LangGraph.
+- **UI**: Conversation history, file uploads, model status indication.
 
 ---
 
 
-## ⚡ סיכום
-- **הפרדה ברורה** בין HTTP, לוגיקה עסקית, ותקשורת חיצונית.
-- **תלויות חיצוניות מבודדות** בבדיקות יחידה באמצעות מוקאינג.
-- **קונפיגורציה נקייה** דרך `.env` ללא סודות בקוד.
-- **בסיס מוכן להרחבות** (Streaming, RAG, observability, ועוד).
-
-</div>
-</div>
-</div>
+## ⚡ Summary
+- **Clear separation** between HTTP, business logic, and external communication.
+- **External dependencies isolated** in unit tests using mocking.
+- **Clean configuration** through `.env` without secrets in code.
+- **Ready foundation for extensions** (Streaming, RAG, observability, and more).

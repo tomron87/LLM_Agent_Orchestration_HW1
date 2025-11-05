@@ -1,105 +1,101 @@
-<div dir="rtl">
+# 🖼️ Screenshots and Demonstrations
 
-# 🖼️ Screenshots and Demonstrations  
-
-## 🎯 מטרת המסמך  
-מסמך זה מציג צילומי מסך והדגמות של מערכת הצ'אט שנבנתה במסגרת הפרויקט.  
-המטרה היא להמחיש את תפקוד המערכת בזמן אמת — החל מהפעלת השרתים ועד לשימוש השוטף בממשק הגרפי.  
-התמונות מלוות את השלבים המרכזיים של העבודה בהתאם למפרט ולארכיטקטורה המתוארים במסמכים האחרים.
+## 🎯 Document Purpose
+This document presents screenshots and demonstrations of the chat system built as part of the project.
+The goal is to illustrate the system's functioning in real-time — from starting the servers to routine use of the graphical interface.
+The images accompany the main stages of work according to specifications and architecture described in other documents.
 
 ---
 
-## 🧭 שלב 1 – מסך פתיחה והגדרות  
+## 🧭 Stage 1 – Opening Screen and Settings
 
-עם פתיחת האפליקציה, המשתמש מוצג בפני מסך פתיחה הכולל בחירת מודל, בדיקת תקינות חיבור לשרת, והזנת מפתח API.  
+When opening the application, the user is presented with an opening screen including model selection, server connection health check, and API key entry.
 
 📸 [UI_interface_welcome.png](screenshot_images/UI_interface_welcome.png)
 
-> בצילום מוצגים שדות ההזנה, כפתור "בדוק API".
+> The screenshot shows input fields, "Check API" button.
 
 ---
 
-## 💬 שלב 2 – שיחה עם הבוט  
+## 💬 Stage 2 – Conversation with Bot
 
-הדגמה של ממשק הצ׳אט בפעולה – המשתמש שולח הודעה, המערכת מחזירה תשובה, ונראית אינדיקציה לזמן תגובה וכפתור "העתק".  
+Demonstration of chat interface in action – user sends message, system returns response, and shows response time indication and "copy" button.
 
 📸 [UI_chat_interface.png](screenshot_images/UI_chat_interface.png)
 
-> בצילום ניתן לראות עיצוב עקבי וברור בין הודעות המשתמש לתגובות המערכת.
+> The screenshot shows consistent and clear design between user messages and system responses.
 
 ---
 
-## ⚙️ שלב 3 – ניהול מודלים וחיבור ל־API  
+## ⚙️ Stage 3 – Model Management and API Connection
 
-צילום מסך המדגים את שינוי המודל הפעיל דרך הממשק (למשל מעבר מ־Phi ל־Mistral), וכן את תוצאת בדיקת תקינות החיבור ל־Ollama באמצעות API Health Check.  
+Screenshot demonstrating changing active model through interface (for example moving from Phi to Mistral), and connection health check result to Ollama using API Health Check.
 
 📸 [api_health.png](screenshot_images/api_health.png)
 
 📸 [model_selection.png](screenshot_images/model_selection.png)
-> בתמונה מוצגים ממשק בחירת המודל ותוצאת בדיקת החיבור.
+> The image shows model selection interface and connection check result.
 
 ---
 
-## 🧪 שלב 4 – בדיקות והודעות שגיאה  
+## 🧪 Stage 4 – Tests and Error Messages
 
-### ⚠️ בעיות שרת או מודל  
-צילומים המציגים מקרים בהם שרת Ollama אינו פעיל או שהמודל הרצוי לא מותקן.  
+### ⚠️ Server or Model Problems
+Screenshots showing cases where Ollama server is not active or desired model is not installed.
 
-📸 [error_ollama_server_off.png](screenshot_images/error_ollama_server_off.png)  
+📸 [error_ollama_server_off.png](screenshot_images/error_ollama_server_off.png)
 📸 [error_ollama_model_installation.png](screenshot_images/error_ollama_model_installation.png)
 
-> בצילומים נראות הודעות אזהרה כאשר השרת לא פעיל או המודל לא מותקן.
+> Screenshots show warning messages when server is not active or model is not installed.
 
-### 🔑 בעיות מפתח API או כתובת  
-המחשה למצבים בהם מפתח ה־API חסר, שגוי, או כתובת השרת אינה נכונה.  
+### 🔑 API Key or Address Problems
+Illustration for situations where API key is missing, wrong, or server address is incorrect.
 
-📸 [error_api_key_missing.png](screenshot_images/error_api_key_missing.png)  
+📸 [error_api_key_missing.png](screenshot_images/error_api_key_missing.png)
 📸 [error_api_url_wrong.png](screenshot_images/error_api_url_wrong.png)
 
-> בצילומים נראות הודעות שגיאה בממשק (לדוגמה: "API key invalid" או "Model not found").
+> Screenshots show error messages in interface (for example: "API key invalid" or "Model not found").
 
-### 💭 בעיות תשובה ריקה  
-תרחיש בו הבקשה מצליחה אך המודל מחזיר תשובה ריקה.  
+### 💭 Empty Response Problems
+Scenario where request succeeds but model returns empty response.
 
 📸 [error_.empty_answer.png](screenshot_images/error_.empty_answer.png)
 
-> בצילום נראית התראה על תשובה ריקה — מבלי שהתרחשה שגיאת ריצה או חיבור.
+> Screenshot shows alert about empty response — without execution or connection error occurring.
 
 ---
 
-## 🧰 שלב 5 – תצוגת לוגים ו־Console  
+## 🧰 Stage 5 – Logs and Console Display
 
-בסעיף זה מוצגים צילומי מסך מתוך סביבת הפיתוח (terminal) המדגימים את הרצת השרתים וה־UI.
+This section shows screenshots from development environment (terminal) demonstrating server and UI execution.
 
-### 🚀 הרצת שרת Ollama  
-צילום של הרצת ה־Ollama באמצעות הפקודה `make ollama`.  
+### 🚀 Running Ollama Server
+Screenshot of Ollama execution using `make ollama` command.
 
 📸 [ollama_server_initiation.png](screenshot_images/ollama_server_initiation.png)
 
-> ניתן לראות את שרת Ollama עולה ואת כתובת ה־host המקומית שלו.
+> Shows Ollama server starting up and its local host address.
 
-### 🌐 הרצת שרת FastAPI  
-צילום של הרצת שרת ה־API בזמן טעינת המערכת וביצוע בקשות.  
+### 🌐 Running FastAPI Server
+Screenshot of API server execution during system loading and request execution.
 
-📸 [api_logs.png](screenshot_images/api_logs.png)  
+📸 [api_logs.png](screenshot_images/api_logs.png)
 📸 [api_logs_chat.png](screenshot_images/api_logs_chat.png)
 
-> ניתן לראות קריאות API ותגובות בזמן אמת מהשרת.
+> Shows API calls and real-time responses from server.
 
-### 💻 הרצת ממשק המשתמש (UI)  
-צילום של הרצת ממשק ה־UI באמצעות הפקודה `make ui`.  
+### 💻 Running User Interface (UI)
+Screenshot of UI interface execution using `make ui` command.
 
 📸 [ui_logs_initiation.png](screenshot_images/ui_logs_initiation.png)
 
-> ניתן לראות את הפעלת הממשק, פתיחת הדפדפן, והקישור לכתובת המקומית של ה־UI.
+> Shows interface activation, browser opening, and link to UI's local address.
 
 ---
 
-## 🧾 סיכום  
+## 🧾 Summary
 
-המסמך מציג את התרחישים המרכזיים להפעלת המערכת וממחיש את יציבותה ואת תהליך התקשורת בין ה־Frontend (Streamlit) ל־Backend (FastAPI) ולמודל השפה (Ollama).  
-התמונות משקפות את השלבים העיקריים בעבודה, ומדגימות את עקרונות התכנון — פשטות, בהירות, ואפשרות להרחבה עתידית.  
+The document presents main scenarios for system activation and illustrates its stability and communication process between Frontend (Streamlit), Backend (FastAPI) and language model (Ollama).
+The images reflect main stages in work, and demonstrate design principles — simplicity, clarity, and future extensibility possibility.
 
-> כל התמונות מאוחסנות בתיקייה `documentation/screenshot_images/`.
-
-</div>
+> All images are stored in `documentation/screenshot_images/` directory.

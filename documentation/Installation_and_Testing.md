@@ -1,51 +1,47 @@
-<div dir="rtl">
+# 📦 Installation and Testing — HW1_ai_chat_bot
 
-# 📦 התקנה ובדיקות — HW1_ai_chat_bot
-
-מסמך זה מסביר **שלב־אחר־שלב** איך להקים סביבה, להריץ בדיקות (כולל תוצאות צפויות ופתרון תקלות), לבצע בדיקת אינטגרציה עם LangChain↔️Ollama, ולהפעיל את המערכת (API + UI).
+This document explains **step-by-step** how to set up environment, run tests (including expected results and troubleshooting), perform LangChain↔️Ollama integration testing, and run the system (API + UI).
 
 ---
 
 ---
 
-## 🧭 לפני שמתחילים — לוודא מיקום תיקייה נכון
-כל הפקודות במדריך זה יש להריץ מתוך **תיקיית השורש של הפרויקט**:
+## 🧭 Before You Start — Verify Correct Directory Location
+All commands in this guide should be run from **project root directory**:
 `HW1_ai_chat_bot/`
 
-יש להעתיק את הפקודות ולהריץ אותן ב־**terminal** כאשר אתם נמצאים בתיקייה זו.
-ניתן לוודא זאת באמצעות הפקודה:
-```
-bash
+You should copy the commands and run them in **terminal** when you are in this directory.
+You can verify this using command:
+```bash
 pwd   # macOS/Linux
-# או
+# or
 cd    # Windows
 ```
-הפלט צריך להסתיים ב:
+Output should end with:
 .../HW1_ai_chat_bot
 
 ---
 
-## ✅ דרישות מוקדמות
+## ✅ Prerequisites
 
-1. **מערכת הפעלה**: macOS / Linux / Windows 10+  
-2. **Python**: גרסה 3.10 ומעלה (מומלץ 3.10.x).
-3. **Ollama**: מותקן ונגיש ב־PATH.  
-   - הורדה והתקנה: <https://ollama.com>  
-   - הפעלה: `ollama serve`  
-   - משיכת מודל לדוגמה: `ollama pull phi` או `ollama pull mistral`
-4. **Git** (מומלץ): לניהול קוד וגרסאות.
-5. **פורט** פנוי ל־Ollama (ברירת מחדל: `127.0.0.1:11434`).
+1. **Operating system**: macOS / Linux / Windows 10+
+2. **Python**: Version 3.10 and above (recommended 3.10.x).
+3. **Ollama**: Installed and accessible in PATH.
+   - Download and installation: <https://ollama.com>
+   - Running: `ollama serve`
+   - Example model pull: `ollama pull phi` or `ollama pull mistral`
+4. **Git** (recommended): For code and version management.
+5. **Port** available for Ollama (default: `127.0.0.1:11434`).
 
-> **טיפ**: אם אתם בסביבת Apple Silicon, ודאו ש־xcode-tools/Command Line Tools מותקנים (`xcode-select --install`).
+> **Tip**: If you're on Apple Silicon, ensure xcode-tools/Command Line Tools are installed (`xcode-select --install`).
 
 ---
 
-## 🧰 הוראות התקנה
+## 🧰 Installation Instructions
 
-### 1) יצירת סביבה וירטואלית והפעלתה
-```
-bash
-# באותה ספריית פרויקט (שורש הריפו)
+### 1) Create and activate virtual environment
+```bash
+# In same project directory (repo root)
 python -m venv .venv
 # macOS/Linux
 source .venv/bin/activate
@@ -53,220 +49,219 @@ source .venv/bin/activate
 # .venv\Scripts\Activate.ps1
 ```
 
-### 2) התקנת חבילות
-```
+### 2) Install packages
+```bash
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 3) הגדרת קובץ .env
-צרו `.env` (או העתיקו מ־`.env.example`) והגדירו:
+### 3) Configure .env file
+Create `.env` (or copy from `.env.example`) and configure:
 ```
-APP_API_KEY=my-local-token-123       # חובה – מפתח גישה משלכם (תואם למה שנשלח בבקשה)
-OLLAMA_HOST=http://127.0.0.1:11434   # חובה – כתובת שרת Ollama, לרוב לא משנים
-OLLAMA_MODEL=phi                     # חובה – שם המודל שמותקן ב-Ollama (phi/mistral)
-API_URL=http://127.0.0.1:8000/api/chat   # חובה לקליינט – הכתובת של FastAPI שלכם (כולל /api/chat)
+APP_API_KEY=my-local-token-123       # Required – your own access key (matching what's sent in request)
+OLLAMA_HOST=http://127.0.0.1:11434   # Required – Ollama server address, usually not changed
+OLLAMA_MODEL=phi                     # Required – model name installed in Ollama (phi/mistral)
+API_URL=http://127.0.0.1:8000/api/chat   # Required for client – your FastAPI address (including /api/chat)
 
 ```
-> **חשוב**: אל תשאירו `APP_API_KEY=change-me`. שימו ערך אמיתי כלשהו.
+> **Important**: Don't leave `APP_API_KEY=change-me`. Set some real value.
 ---
 
-## 🧪 בדיקות — סדר ריצה מומלץ
+## 🧪 Tests — Recommended Execution Order
 
-הפרויקט כולל שני סוגי בדיקות:
-- **Unit** – רצות ללא תלות בשרת חיצוני (Ollama ממוק־/מזויף).
-- **Integration** – רצות מול שרת Ollama אמיתי (אופציונלי).
+Project includes two types of tests:
+- **Unit** – Run without dependency on external server (Ollama mocked/faked).
+- **Integration** – Run against real Ollama server (optional).
 
-בנוסף יש **Preflight** (בדיקת תנאי סף) ו־**בדיקת LangChain** אופציונלית.
+Additionally there is **Preflight** (threshold condition check) and optional **LangChain check**.
 
-> **קבצי תצורה**:  
-> - `pytest.ini` — מגדיר סימון `@pytest.mark.integration` ומסלולי בדיקות.  
-> - `tests/conftest.py` — יוצר פלט קריא: שם קובץ → שם בדיקה → `PASSED/FAILED` → `EXPECTED` (+ `ACTUAL` במקרה כשל).
+> **Configuration files**:
+> - `pytest.ini` — Defines `@pytest.mark.integration` marker and test paths.
+> - `tests/conftest.py` — Creates readable output: file name → test name → `PASSED/FAILED` → `EXPECTED` (+ `ACTUAL` in case of failure).
 
-### 0) Preflight (חובה לפני הכול)
-```
+### 0) Preflight (required before everything)
+```bash
 python ./scripts/preflight.py
 ```
-קריטריונים להצלחה:
-- אין שורות `[FAIL]` בפלט.
-- `APP_API_KEY` אינו placeholder.
-- `OLLAMA_HOST` נראה URL חוקי.
-- (אופציונלי) “Ollama reachable …” — תקין אם השרת רץ.
-- **(ל־UI)** מוגדר `API_URL` בקובץ `.env` — אחרת ה־`streamlit_app.py` יפסיק עם הודעת שגיאה מתאימה.
+Success criteria:
+- No `[FAIL]` lines in output.
+- `APP_API_KEY` is not placeholder.
+- `OLLAMA_HOST` looks like valid URL.
+- (Optional) "Ollama reachable …" — healthy if server is running.
+- **(For UI)** `API_URL` defined in `.env` file — otherwise `streamlit_app.py` stops with appropriate error message.
 
 
-אם כשל: לתקן לפי ההנחיות שמודפסות (Hints) ולרוץ שוב.
+If failed: fix according to printed instructions (Hints) and run again.
 
-### 1) Unit Tests — ללא תלות חיצונית
-```
+### 1) Unit Tests — Without External Dependency
+```bash
 pytest -m "not integration" -q
 ```
 
-> הפלט מציג לכל קובץ את הסטטוס, לכל בדיקה `PASSED/FAILED`, ומתחת:  
-> `EXPECTED: …` (תמיד) ו־`ACTUAL: …` (רק בכשל).  
-> בסוף כל קובץ: `>>> FILE STATUS: ALL PASSED` אם כל הבדיקות עברו.
+> Output displays status for each file, for each test `PASSED/FAILED`, and below:
+> `EXPECTED: …` (always) and `ACTUAL: …` (only on failure).
+> At end of each file: `>>> FILE STATUS: ALL PASSED` if all tests passed.
 
-**פירוט בדיקות (Unit):**
+**Unit Tests Details:**
 
-הטבלה הבאה מפרטת את כל בדיקות היחידה בפרויקט, לפי קובץ, מטרת כל בדיקה, התוצאה הצפויה ומה לבדוק במקרה של כשל.
+Following table details all unit tests in project, by file, each test's purpose, expected result and what to check in case of failure.
 
-| קובץ                                  | מה הבדיקה בודקת | תוצאות צפויות | אם נכשל – מה לבדוק / מה לתקן |
+| File                                  | What test checks | Expected results | If failed – what to check / what to fix |
 |---------------------------------------|---|---|---|
-| `tests/test_auth_api.py`              | `test_missing_token_returns_401` — בקשת `/api/chat` בלי כותרת Authorization | סטטוס `401` וטקסט שמכיל “Missing bearer token” | האם הכותרת אכן לא נשלחה? מימוש `require_api_key` מחזיר 401 ושרשור הודעה נכונה; `APP_API_KEY` לא אמור להשפיע כאן |
-|  `tests/test_auth_api.py`             | `test_invalid_token_returns_401` — כותרת עם טוקן שגוי | סטטוס `401` וטקסט שמכיל “Invalid API key” | בדקו שהטוקן שונה מה־`.env`; לוגיקת ההשוואה ב־`require_api_key`; לא “לבלוע” שגיאות |
-| `tests/test_auth_api.py`              | `test_auth_wrong_scheme_returns_401` — שימוש בסכימה לא נכונה (`Token` במקום `Bearer`) | סטטוס `401` | בדקו ב־`require_api_key` שמוודאים סכימת `Bearer` (case-sensitive/insensitive בהתאם למדיניות) |
-| `tests/test_auth_api.py`              | `test_auth_empty_bearer_returns_401` — סכימה נכונה אבל ערך ריק | סטטוס `401` | אימות שלא מתקבל ערך ריק; פענוח הכותרת; החזרת הודעה מתאימה |
-| `tests/test_auth_api.py`              | `test_auth_lowercase_bearer_policy` — בדיקת מדיניות lowercase/uppercase | אם מוגדר כ־case-insensitive → `200`; אחרת `401` | הבהירו את המדיניות בקוד/מסמך; אם רוצים לעבור בדיקה זו כ־200, השוו סכימה תוך הורדת רישיות |
-| `tests/test_chat_validation_api.py`   | `test_chat_empty_messages_returns_422` — `messages` הוא `[]` | סטטוס `400/422` | הגבלות סכימה: `messages` לא ריק; ולידציות Pydantic ב־`ChatRequest` |
-| `tests/test_chat_validation_api.py`   | `test_chat_missing_messages_key_returns_422` — חסר מפתח `messages` | סטטוס `400/422` | שדה חובה בסכימה; שמות שדות תואמים; שימוש נכון ב־`Field(...)` |
-| `tests/test_chat_validation_api.py`   | `test_chat_message_missing_fields_returns_422` — איבר ב־`messages` ללא `content` תקין | סטטוס `400/422` | `ChatMessage.content` עם `min_length=1`; בדקו שלא מתקבל `""` |
-| `tests/test_chat_validation_api.py`   | `test_chat_model_wrong_type_returns_422` — `model` לא מסוג מחרוזת | סטטוס `400/422` | טיפוסי שדות בסכימה; אם השדה אופציונלי — בדקו שהוא מחרוזת כשלמספקים ערך |
-| `tests/test_chat_validation_api.py`   | `test_chat_temperature_out_of_range_returns_422` — טמפרטורה מחוץ לטווח [0,1] | סטטוס `400/422` | הוסיפו שדה `temperature` לסכימה עם מגבלות; או עדכנו את הטסט אם אין תמיכה |
-| `tests/test_chat_happy_errors_api.py` | `test_valid_token_with_mock` — Happy path: מוקאינג של `ollama_client.has_model=True` ו־`chat="MOCK-ANSWER"` | סטטוס `200` וגוף `{"answer":"MOCK-ANSWER"}` | ודאו שממוק גם `has_model` ל־`True` (כדי לא ליפול ל־`notice`), ושהמוק של `chat` מוחזר; בדקו ש־endpoint מחזיר את ה־answer |
-| `tests/test_chat_happy_errors_api.py` | `test_chat_when_client_raises_returns_5xx` — מוקאינג של חריגה מ־`ollama_client.chat` | סטטוס `500/502` וגוף עם `detail`/`error` | ממקו גם `has_model=True` כדי להגיע לענף שקורא ל־`chat`; ב־endpoint לתפוס חריגות ולמפות ל־`HTTPException(5xx)` |
-| `tests/test_chat_happy_errors_api.py` | `test_chat_endpoint_handles_missing_model` — מודל לא קיים (`has_model=False`) | סטטוס `200` עם שדה `notice` ידידותי (“לא מותקן…”) ו־`answer` ריק | שה־service/endpoint מחזיר `notice` ולא שגיאה; ניסוח ההודעה; אל תנסה לקרוא ל־`chat` כשאין מודל |
-| `tests/test_health_api.py`            | `test_health_endpoint` — `/api/health` בסיסי | סטטוס `200` ו־JSON עם מפתחות `status`, `ollama` (ואפשר `default_model`) | הפונקציה מחזירה מבנה עקבי גם כשהשרת זמין/לא זמין; אין תלות ב־Ollama לסטטוס 200 בסיסי |
-| `tests/test_health_api.py`            | `test_health_when_ping_fails_returns_structured_json` — `ping()` נכשל | סטטוס `200` (או `503` לפי מדיניות) עם JSON עקבי | שמרו על גוף עקבי (מפתחות קבועים/הודעה) גם בכשל; אם בחרתם 503 — עדכנו תיעוד/בדיקה |
-| `tests/test_config_settings.py`       | `test_settings_defaults_when_env_missing` — דיפולטים כשאין ENV | טיפוסים/דיפולטים תקינים: API key מחרוזת, host מתחיל `http`, model מחרוזת | `config.py` טוען dotenv; ערכי דיפולט תואמים למסמך; ללא קריסה כשחסר `.env` |
-| `tests/test_config_settings.py`       | `test_settings_env_override` — ערכים מה־ENV עוקפים דיפולט | הערכים שונו לערכי הבדיקה (למשל `XYZ`, `http://x:1234`, `mistral`) | שימוש ב־`os.getenv`/טעינת dotenv בזמן; אפשרות reload ב־fixture אם צריך |
-| `tests/test_ollama_client_unit.py`    | `test_ollama_client_end_to_end_unit` — יחידה ממוק־ת: `ping()` הצלחה/כשל, `chat()` URL/payload, 5xx → raise | `ping` מחזיר `True/False` בהתאם למוק; `chat` מחזיר `"OK"` מתוך `{"message":{"content":"OK"}}`; 5xx → חריגה | ודאו `requests.get/post` ממוקים; URL נבנה מ־`OLLAMA_HOST` ומסתיים `/api/chat`; payload כולל `model/messages/stream/options.temperature` |
-| `tests/test_ollama_client_unit.py`    | `test_has_model_handles_missing_models_key` — `/api/tags` חסר `models` | הפונקציה מחזירה `False` ללא חריגה | טיפול חסין כשאין מפתח; החזרת `False` כברירת מחדל |
-| `tests/test_ollama_client_unit.py`    | `test_chat_timeout_raises_runtimeerror` — זמן־קצוב/חיבור נכשל | העלאת `RuntimeError` (או חריגה מוסכמת) | ב־`chat()` לתפוס `requests.Timeout/ConnectionError` ולהעלות `RuntimeError` אחיד; עדכנו הטסט אם שם החריגה שונה |
+| `tests/test_auth_api.py`              | `test_missing_token_returns_401` — `/api/chat` request without Authorization header | Status `401` and text containing "Missing bearer token" | Is header actually not sent? `require_api_key` implementation returns 401 and correct message string; `APP_API_KEY` shouldn't affect here |
+|  `tests/test_auth_api.py`             | `test_invalid_token_returns_401` — header with wrong token | Status `401` and text containing "Invalid API key" | Check token differs from `.env`; comparison logic in `require_api_key`; don't "swallow" errors |
+| `tests/test_auth_api.py`              | `test_auth_wrong_scheme_returns_401` — using wrong scheme (`Token` instead of `Bearer`) | Status `401` | Check in `require_api_key` that `Bearer` scheme is verified (case-sensitive/insensitive per policy) |
+| `tests/test_auth_api.py`              | `test_auth_empty_bearer_returns_401` — correct scheme but empty value | Status `401` | Verify empty value not accepted; header parsing; appropriate message return |
+| `tests/test_auth_api.py`              | `test_auth_lowercase_bearer_policy` — checking lowercase/uppercase policy | If defined as case-insensitive → `200`; otherwise `401` | Clarify policy in code/document; if want to pass this test as 200, compare scheme with case lowering |
+| `tests/test_chat_validation_api.py`   | `test_chat_empty_messages_returns_422` — `messages` is `[]` | Status `400/422` | Schema constraints: `messages` not empty; Pydantic validations in `ChatRequest` |
+| `tests/test_chat_validation_api.py`   | `test_chat_missing_messages_key_returns_422` — missing `messages` key | Status `400/422` | Required field in schema; field names match; correct use of `Field(...)` |
+| `tests/test_chat_validation_api.py`   | `test_chat_message_missing_fields_returns_422` — item in `messages` without valid `content` | Status `400/422` | `ChatMessage.content` with `min_length=1`; check `""` not accepted |
+| `tests/test_chat_validation_api.py`   | `test_chat_model_wrong_type_returns_422` — `model` not string type | Status `400/422` | Field types in schema; if field optional — check it's string when value provided |
+| `tests/test_chat_validation_api.py`   | `test_chat_temperature_out_of_range_returns_422` — temperature outside range [0,1] | Status `400/422` | Add `temperature` field to schema with constraints; or update test if no support |
+| `tests/test_chat_happy_errors_api.py` | `test_valid_token_with_mock` — Happy path: mocking `ollama_client.has_model=True` and `chat="MOCK-ANSWER"` | Status `200` and body `{"answer":"MOCK-ANSWER"}` | Ensure both `has_model` mocked to `True` (to not fall to `notice`), and `chat` mock returned; check endpoint returns answer |
+| `tests/test_chat_happy_errors_api.py` | `test_chat_when_client_raises_returns_5xx` — mocking exception from `ollama_client.chat` | Status `500/502` and body with `detail`/`error` | Mock `has_model=True` also to reach branch calling `chat`; in endpoint catch exceptions and map to `HTTPException(5xx)` |
+| `tests/test_chat_happy_errors_api.py` | `test_chat_endpoint_handles_missing_model` — model doesn't exist (`has_model=False`) | Status `200` with friendly `notice` field ("not installed…") and empty `answer` | That service/endpoint returns `notice` not error; message wording; don't try calling `chat` when no model |
+| `tests/test_health_api.py`            | `test_health_endpoint` — basic `/api/health` | Status `200` and JSON with keys `status`, `ollama` (and possibly `default_model`) | Function returns consistent structure whether server available/not; no Ollama dependency for basic 200 status |
+| `tests/test_health_api.py`            | `test_health_when_ping_fails_returns_structured_json` — `ping()` fails | Status `200` (or `503` per policy) with consistent JSON | Keep consistent body (fixed keys/message) even on failure; if chose 503 — update documentation/test |
+| `tests/test_config_settings.py`       | `test_settings_defaults_when_env_missing` — defaults when no ENV | Valid types/defaults: API key string, host starts `http`, model string | `config.py` loads dotenv; default values match document; no crash when `.env` missing |
+| `tests/test_config_settings.py`       | `test_settings_env_override` — values from ENV override default | Values changed to test values (e.g. `XYZ`, `http://x:1234`, `mistral`) | Use of `os.getenv`/dotenv loading at time; reload option in fixture if needed |
+| `tests/test_ollama_client_unit.py`    | `test_ollama_client_end_to_end_unit` — mocked unit: `ping()` success/fail, `chat()` URL/payload, 5xx → raise | `ping` returns `True/False` per mock; `chat` returns `"OK"` from `{"message":{"content":"OK"}}`; 5xx → exception | Ensure `requests.get/post` mocked; URL built from `OLLAMA_HOST` ending `/api/chat`; payload includes `model/messages/stream/options.temperature` |
+| `tests/test_ollama_client_unit.py`    | `test_has_model_handles_missing_models_key` — `/api/tags` missing `models` | Function returns `False` without exception | Robust handling when key missing; return `False` as default |
+| `tests/test_ollama_client_unit.py`    | `test_chat_timeout_raises_runtimeerror` — timeout/connection fails | Raise `RuntimeError` (or agreed exception) | In `chat()` catch `requests.Timeout/ConnectionError` and raise uniform `RuntimeError`; update test if exception name differs |
 
-**הערות כלליות:**
-- כל הבדיקות הן **בדיקות יחידה (Unit)** אמיתיות – אין תלות בשרת Ollama אמיתי; הבדיקות משתמשות ב־`monkeypatch` כדי למקד את הקריאות.
-- אם מתקבלת תוצאה מפתיעה (למשל 200 עם `notice` במקום 5xx), ודאו שמומק גם `has_model` ל־`True`.
-- אם אחת מבדיקות הולידציה נכשלת (422/400), בדקו את סכימת ה־Pydantic בקובץ `chat.py`.
+**General Notes:**
+- All tests are true **unit tests (Unit)** — no dependency on real Ollama server; tests use `monkeypatch` to mock calls.
+- If get surprising result (e.g. 200 with `notice` instead of 5xx), ensure `has_model` also mocked to `True`.
+- If one of validation tests fails (422/400), check Pydantic schema in `chat.py` file.
 
 ---
-### 2) Integration Tests — מול שרת Ollama אמיתי (אופציונלי)
-הריצו בטרמינל אחר:  
+### 2) Integration Tests — Against Real Ollama Server (Optional)
+Run in another terminal:
 ```bash
 ollama serve
 ```
-``` 
-bash
-ollama pull <MODEL>   # אם המודל לא מותקן
+```bash
+ollama pull <MODEL>   # if model not installed
 ```
-ואז:  
-```
+Then:
+```bash
 pytest -m integration -q
 ```
-**פירוט בדיקות (Integration):**
+**Integration Tests Details:**
 
-הבדיקות בקובץ זה הן **בדיקות אינטגרציה אמיתיות**, כלומר הן תלויות בחיבור פעיל לשרת Ollama מקומי.  
-הן בודקות זמינות של השרת (`ping`) וכן קיום של מודלים מותקנים מקומית לפי ההגדרות בקובץ `.env`.
+Tests in this file are **real integration tests**, meaning they depend on active connection to local Ollama server.
+They test server availability (`ping`) and existence of locally installed models per settings in `.env` file.
 
-| קובץ | מה הבדיקה בודקת | תוצאות צפויות | אם נכשל – מה לבדוק / מה לתקן |
+| File | What test checks | Expected results | If failed – what to check / what to fix |
 |---|---|---|---|
-| `tests/test_ollama_models_integration.py` | `test_ping_reachable` — בודקת זמינות שרת Ollama מקומי באמצעות `ping()` | הפונקציה מחזירה `True` אם השרת פעיל, `False` אחרת; אם השרת לא פעיל — הבדיקה תסומן כ־SKIPPED | ודאו שהפקודה `ollama serve` רצה ברקע; אם אתם מריצים על מחשב חדש — ודאו שהותקן Ollama ושהפורט (`127.0.0.1:11434`) פתוח |
-| `tests/test_ollama_models_integration.py` | `test_has_model_checks_local` — בודקת אם המודל הדיפולטי מה־`.env` מותקן בשרת המקומי | `has_model(default)` מחזיר `True` אם המודל קיים ו־`False` אם לא; בדיקה למודל דמיוני תמיד תחזיר `False` | ודאו שקובץ `.env` מכיל `OLLAMA_MODEL` תקין (למשל `phi` או `mistral`); הריצו `ollama pull <model>` כדי לוודא שהמודל מותקן; הפעלת השרת (`ollama serve`) נדרשת לפני הריצה |
+| `tests/test_ollama_models_integration.py` | `test_ping_reachable` — tests local Ollama server availability using `ping()` | Function returns `True` if server active, `False` otherwise; if server not active — test marked as SKIPPED | Ensure `ollama serve` command running in background; if on new computer — ensure Ollama installed and port (`127.0.0.1:11434`) open |
+| `tests/test_ollama_models_integration.py` | `test_has_model_checks_local` — tests if default model from `.env` installed on local server | `has_model(default)` returns `True` if model exists and `False` if not; test for imaginary model always returns `False` | Ensure `.env` file contains valid `OLLAMA_MODEL` (e.g. `phi` or `mistral`); run `ollama pull <model>` to ensure model installed; server activation (`ollama serve`) required before running |
 
 ---
 
-**הערות כלליות:**
-- אם Ollama לא פעיל, הטסטים יופיעו כ־`SKIPPED` ולא כ־`FAILED`, כדי למנוע כשל שגוי.
-- מומלץ לוודא מראש שהמודלים הנדרשים מותקנים עם:
+**General Notes:**
+- If Ollama not active, tests appear as `SKIPPED` not `FAILED`, to prevent false failure.
+- Recommended to verify required models installed first with:
   ```bash
   ollama pull phi
   ollama pull mistral
   ```
-  
-### 3) בדיקת אינטגרציה LangChain ↔️ Ollama
-קובץ עזר: `scripts/check_langchain.py`.  
-הרצה:
-```
+
+### 3) LangChain ↔️ Ollama Integration Test
+Helper file: `scripts/check_langchain.py`.
+Execution:
+```bash
 python ./scripts/check_langchain.py
 ```
-תוצאה צפויה: הדפסה של תשובה קצרה מהמודל. אם נכשל — תתקבל הודעה ברורה (למשל על חיבור/מודל).
+Expected result: Printing short response from model. If fails — clear message received (e.g. about connection/model).
 
 ---
 
-# ▶️ הפעלה והרצה של המערכת — HW1_ai_chat_bot
+# ▶️ System Execution and Running — HW1_ai_chat_bot
 
-הסעיף הבא מדריך **שלב־אחר־שלב** כיצד להפעיל את ה־API ואת ה־UI, וכיצד לאמת שהכול עובד בעזרת בדיקות נקודות קצה.  
-נניח שאתם כבר נמצאים בתיקיית השורש של הפרויקט (`HW1_ai_chat_bot`) והסביבה הווירטואלית פעילה.
+Following section guides **step-by-step** how to run API and UI, and how to verify everything works using endpoint checks.
+Assuming you're already in project root directory (`HW1_ai_chat_bot`) and virtual environment active.
 
 ---
 
-## 1) הפעלת שרת ה‑API (FastAPI)
+## 1) Running API Server (FastAPI)
 
-```
+```bash
 uvicorn app.main:app --reload
 ```
-- במסוף אמור להופיע: `Uvicorn running on http://127.0.0.1:8000`  
-- השאירו את החלון הזה פתוח בזמן העבודה.
+- Terminal should show: `Uvicorn running on http://127.0.0.1:8000`
+- Keep this window open during work.
 
-### בדיקות נקודות קצה (Endpoint Checks)
+### Endpoint Checks
 
-#### A. בריאות מערכת (תואם לטסטים `test_health_api.py`)
+#### A. System Health (matches `test_health_api.py` tests)
 ```bash
 curl http://127.0.0.1:8000/api/health
 ```
-**צפי:** JSON עם המפתחות: `status`, `ollama`, `default_model`  
-דוגמה:
+**Expected:** JSON with keys: `status`, `ollama`, `default_model`
+Example:
 ```json
 {"status":"ok","ollama":true,"default_model":"phi"}
 ```
 
-#### B. קריאת צ'אט בסיסית (תואם לטסטים `test_auth_api.py` + `test_chat_*`)
-> החליפו את `YOUR_APP_API_KEY` בשורה למטה לערך מתוך קובץ `.env` (המשתנה `APP_API_KEY`).
+#### B. Basic Chat Call (matches `test_auth_api.py` + `test_chat_*` tests)
+> Replace `YOUR_APP_API_KEY` in line below with value from `.env` file (the `APP_API_KEY` variable).
 
 ```bash
-curl -X POST "http://127.0.0.1:8000/api/chat"   -H "Content-Type: application/json"   -H "Authorization: Bearer YOUR_APP_API_KEY"   -d '{"messages":[{"role":"user","content":"שלום"}], "stream":false}'
+curl -X POST "http://127.0.0.1:8000/api/chat"   -H "Content-Type: application/json"   -H "Authorization: Bearer YOUR_APP_API_KEY"   -d '{"messages":[{"role":"user","content":"Hello"}], "stream":false}'
 ```
-**צפי:**  
-- אם המודל מותקן ב־Ollama → סטטוס `200` עם מפתח `answer`.  
-- אם המודל לא מותקן → `200` עם מפתח `notice` שמסביר כיצד להתקין (תואם לטסט `test_chat_endpoint_handles_missing_model`).  
-- אם הכותרת חסרה/לא תקינה → `401` (תואם לטסטים `test_auth_api.py`).  
-- אם גוף הבקשה לא תקין (למשל `messages` ריק) → `400/422` (תואם ל־`test_chat_validation_api.py`).
+**Expected:**
+- If model installed in Ollama → status `200` with `answer` key.
+- If model not installed → `200` with `notice` key explaining how to install (matches `test_chat_endpoint_handles_missing_model` test).
+- If header missing/invalid → `401` (matches `test_auth_api.py` tests).
+- If request body invalid (e.g. `messages` empty) → `400/422` (matches `test_chat_validation_api.py`).
 
-> **טיפ:** אם קיבלתם `401` – ודאו שהכותרת `Authorization` תקינה וש־`APP_API_KEY` תואם בדיוק לערך ב־`.env`.
+> **Tip:** If got `401` – verify `Authorization` header valid and `APP_API_KEY` exactly matches value in `.env`.
 
 ---
 
-## 2) הפעלת ממשק משתמש (Streamlit)
+## 2) Running User Interface (Streamlit)
 
 ```bash
 streamlit run ./ui/streamlit_app.py
 ```
-- ברירת מחדל: Streamlit ינסה לפתוח דפדפן אוטומטית.  
-- אם הוא **לא נפתח אוטומטית**, כנסו ידנית לכתובת:
-  - `http://127.0.0.1:8501` או `http://localhost:8501`
+- Default: Streamlit tries to open browser automatically.
+- If it **doesn't open automatically**, enter manually to address:
+  - `http://127.0.0.1:8501` or `http://localhost:8501`
 
-### מה חשוב להגדיר לפני ההפעלה
-ב־`.env` צריך להיות:
+### Important Configuration Before Running
+In `.env` should have:
 ```dotenv
 API_URL=http://127.0.0.1:8000/api/chat
 ```
-זהו ה־endpoint של ה־API שה־UI פונה אליו. ודאו גם ששרת ה־API (Uvicorn) רץ במקביל.
+This is API endpoint that UI calls. Also ensure API server (Uvicorn) running in parallel.
 
-### כיצד מאמתים שה־UI מתקשר ל־API
-- בשדה ההודעה ב־UI כתבו: “שלום” ולחצו Send/Submit.  
-- **צפי:** תשובה מהמודל (אם מותקן), או הודעת `notice` אם לא מותקן.  
-- אם מקבלים שגיאת `401` → עדכנו `APP_API_KEY` ובדקו שה־UI שולח Bearer תואם.  
-- אם אין תקשורת → ודאו שה־`API_URL` מכוון ל־`http://127.0.0.1:8000/api/chat` וששרת ה־API רץ.
+### How to Verify UI Communicates with API
+- In message field in UI write: "Hello" and click Send/Submit.
+- **Expected:** Response from model (if installed), or `notice` message if not installed.
+- If get `401` error → update `APP_API_KEY` and check UI sends matching Bearer.
+- If no communication → ensure `API_URL` points to `http://127.0.0.1:8000/api/chat` and API server running.
 
 ---
-## הפעלה באמצעות Makefile
-ה־Makefile עוטף את שלבי ההפעלה לפי הסדר: **preflight → install → ollama → api → ui**.
+## Running Using Makefile
+Makefile wraps startup stages in order: **preflight → install → ollama → api → ui**.
 
-| Target | מה עושה | הערות שימוש |
+| Target | What it does | Usage notes |
 |---|---|---|
-| `make help` | הצגת פקודות זמינות והסבר על כל אחת | מדפיס את רשימת הפקודות מה־Makefile |
-| `make preflight` | בדיקת Python/חבילות/Ollama/ENV | מריץ `scripts/preflight.py` |
-| `make install` | התקנת תלויות | קורא `requirements.txt` אם קיים |
-| `make ollama` | מוודא ששרת Ollama רץ | מפעיל `ollama serve` אם נדרש, בודק `/api/tags` |
-| `make api` | מפעיל FastAPI עם Uvicorn | פרמטרים: `HOST`, `PORT` |
-| `make ui` | מפעיל Streamlit | פרמטר: `STREAMLIT_PORT` |
-| `make test` | מריץ כל הבדיקות | מכבד `pytest.ini` |
-| `make test-unit` | בדיקות יחידה | שקול ל־`pytest -m "not integration"` |
-| `make test-integration` | מריץ בדיקות אינטגרציה | דורש `@pytest.mark.integration` |
-| `make all` | הפעלה מקצה לקצה | API ברקע, UI בקדמה |
-| `make clean` | ניקוי cache של Python | אופציונלי |
+| `make help` | Display available commands and explanation for each | Prints command list from Makefile |
+| `make preflight` | Check Python/packages/Ollama/ENV | Runs `scripts/preflight.py` |
+| `make install` | Install dependencies | Reads `requirements.txt` if exists |
+| `make ollama` | Ensure Ollama server running | Runs `ollama serve` if needed, checks `/api/tags` |
+| `make api` | Run FastAPI with Uvicorn | Parameters: `HOST`, `PORT` |
+| `make ui` | Run Streamlit | Parameter: `STREAMLIT_PORT` |
+| `make test` | Run all tests | Respects `pytest.ini` |
+| `make test-unit` | Unit tests | Equivalent to `pytest -m "not integration"` |
+| `make test-integration` | Run integration tests | Requires `@pytest.mark.integration` |
+| `make all` | End-to-end execution | API in background, UI in foreground |
+| `make clean` | Clean Python cache | Optional |
 
-### הרצת בדיקות לפי markers
-בפרויקט זה קיים מרקר אחד:
+### Running Tests by Markers
+In this project exists one marker:
 ```ini
 [pytest]
 markers = integration: tests that require a running local Ollama server
@@ -274,27 +269,25 @@ markers = integration: tests that require a running local Ollama server
 
 ---
 
-## ❓ תקלות נפוצות ופתרון מהיר
+## ❓ Common Troubles and Quick Fix
 
-| סימפטום | סיבה נפוצה | פתרון |
+| Symptom | Common Cause | Solution |
 |---|---|---|
-| 401 על `/api/chat` | `APP_API_KEY` placeholder / כותרת Authorization חסרה/לא תקינה | עדכון `.env` (ערך אמיתי ב־`APP_API_KEY`); שליחת `Authorization: Bearer <APP_API_KEY>` |
-| 422 / 400 על `/api/chat` | סכימת בקשה לא תקינה | לוודא `messages` רשימה לא ריקה; לכל הודעה `role` ו־`content` לא ריקים |
-| 200 עם `notice` במקום תשובה | מודל לא מותקן ב־Ollama | להריץ `ollama serve` ואז `ollama pull <model>` (למשל `phi`/`mistral`) |
-| Timeouts / Connection Errors | Ollama לא רץ / כתובת שגויה | להפעיל `ollama serve`; לבדוק `OLLAMA_HOST` ב־`.env`; להריץ `python scripts/preflight.py` |
-| Port already in use | מופעל שרת אחר על אותו פורט | לעצור תהליכים קודמים או להריץ עם פורט אחר: `uvicorn app.main:app --reload --port 8001` |
-| UI לא נפתח אוטומטית | הדפדפן לא נפתח אוטומטית / חומת אש | לפתוח ידנית: `http://127.0.0.1:8501`; לבדוק שחומת האש לא חוסמת |
-| PytestUnknownMarkWarning | `pytest` לא מכיר את `integration` | ודאו שב־`pytest.ini` מוגדר: `markers =\n    integration: tests that require a running local Ollama server` |
+| 401 on `/api/chat` | `APP_API_KEY` placeholder / Authorization header missing/invalid | Update `.env` (real value in `APP_API_KEY`); send `Authorization: Bearer <APP_API_KEY>` |
+| 422 / 400 on `/api/chat` | Invalid request schema | Ensure `messages` non-empty list; each message has non-empty `role` and `content` |
+| 200 with `notice` instead of answer | Model not installed in Ollama | Run `ollama serve` then `ollama pull <model>` (e.g. `phi`/`mistral`) |
+| Timeouts / Connection Errors | Ollama not running / wrong address | Run `ollama serve`; check `OLLAMA_HOST` in `.env`; run `python scripts/preflight.py` |
+| Port already in use | Another server running on same port | Stop previous processes or run with different port: `uvicorn app.main:app --reload --port 8001` |
+| UI doesn't open automatically | Browser doesn't open automatically / firewall | Open manually: `http://127.0.0.1:8501`; check firewall not blocking |
+| PytestUnknownMarkWarning | `pytest` doesn't recognize `integration` | Ensure in `pytest.ini` defined: `markers =\n    integration: tests that require a running local Ollama server` |
 
 ---
 
-## 📝 הערות על קבצי הבדיקות (קישור להיגיון ההפעלה)
+## 📝 Notes on Test Files (Link to Operation Logic)
 
-- **בריאות המערכת** – תואם ל־`tests/test_health_api.py` (בודק JSON עקבי גם אם `ping()` נכשל).  
-- **אימות גישה (401/200)** – תואם ל־`tests/test_auth_api.py` (Bearer Token תקין/שגוי/חסר/סכימה שגויה).  
-- **ולידציית גוף הבקשה** – תואם ל־`tests/test_chat_validation_api.py` (ריק/שדות חסרים/טיפוסים לא תקינים).  
-- **Happy path + חריגות** – תואם ל־`tests/test_chat_happy_errors_api.py` (מוקאינג לתשובה, 5xx על חריגות, notice).  
-- **שכבת Ollama (יחידה ממוק־ת)** – `tests/test_ollama_client_unit.py` (URL/payload/timeout/שגיאות) – **לא** דורש שרת אמיתי.  
-- **בדיקות אינטגרציה מול Ollama** – `tests/test_ollama_models_integration.py` (דורש `ollama serve`; SKIPPED כשלא רץ).
-
-</div>
+- **System health** – matches `tests/test_health_api.py` (checks consistent JSON even if `ping()` fails).
+- **Access authentication (401/200)** – matches `tests/test_auth_api.py` (Bearer Token valid/wrong/missing/wrong scheme).
+- **Request body validation** – matches `tests/test_chat_validation_api.py` (empty/missing fields/invalid types).
+- **Happy path + exceptions** – matches `tests/test_chat_happy_errors_api.py` (mocking for response, 5xx on exceptions, notice).
+- **Ollama layer (mocked unit)** – `tests/test_ollama_client_unit.py` (URL/payload/timeout/errors) – **does not** require real server.
+- **Integration tests against Ollama** – `tests/test_ollama_models_integration.py` (requires `ollama serve`; SKIPPED when not running).

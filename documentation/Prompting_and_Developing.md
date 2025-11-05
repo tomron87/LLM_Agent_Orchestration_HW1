@@ -1,104 +1,100 @@
-<div dir="rtl">
-
-# 🤖 Prompting & Development Process  
-תיעוד תהליך הפיתוח והעבודה עם כלי AI
+# 🤖 Prompting & Development Process
+Documentation of development process and working with AI tools
 
 ---
 
-## 0. 🎯 מטרת המסמך  
-מסמך זה מתעד את תהליך הפיתוח המלא של המערכת — משלב הרעיון והאפיון הראשוני, דרך פיתוח הקוד והבדיקות, ועד לשיפורי הממשק והפקת מסמכי התיעוד.  
-הדגש הוא על תהליך העבודה בעזרת כלי AI (כגון ChatGPT, Ollama ו־Claude) ששימשו ככלי עזר מקצועיים בתכנון, תיעוד ופתרון בעיות בזמן אמת.
+## 0. 🎯 Document Purpose
+This document records the complete development process of the system — from the idea and initial specification stage, through code and testing development, to interface improvements and documentation creation.
+The emphasis is on the work process using AI tools (such as ChatGPT, Ollama and Claude) that served as professional helper tools in planning, documentation and real-time problem-solving.
 
 ---
 
-> **הערה כללית:**  
-> כל הדוגמאות והשלבים המתועדים במסמך זה מייצגים רק חלקים מתוך תהליך שלם של עבודה עם כלי AI.  
-> בכל שלב בפרויקט ביצענו תהליך חשיבה הנדסי: ניתוח הבעיה והדרישות, ניסוח פרומפטים מדויקים על בסיס ההקשר, בחינת התוצרים שהתקבלו, והסקת מסקנות לפני היישום בפועל.  
-> כך ה־AI שימש עבורנו כלי למידה, בדיקה ואימות — לא תחליף לחשיבה אנושית אלא הרחבה שלה.
+> **General Note:**
+> All examples and stages documented in this document represent only parts of a complete process of working with AI tools.
+> At each stage in the project we performed an engineering thinking process: analyzing the problem and requirements, formulating precise prompts based on context, examining received outputs, and drawing conclusions before actual implementation.
+> Thus AI served us as a learning, testing and validation tool — not a replacement for human thinking but an expansion of it.
 
 ---
-## 1. 💻 התקנות ראשוניות על מחשב ה-Mac  
-- ביצענו ניתוח ראשוני של כל דרישות ההתקנה לסביבה הווירטואלית. שילבנו שני קבצי README קיימים (מהוראות התקנה שקיבלנו) עם הסברים שקיבלנו בצ’אט כדי להבין כיצד לבצע את ההתקנות על macOS, כולל יצירת סביבה וירטואלית, התקנת Ollama ובדיקת תקינות מקומית.  
-  [environment_setup_macOS.png](screenshot_images/environment_setup_macOS.png)  
-- לאחר מכן יצרנו קובץ `requirements.txt` מקיף ומדויק, כך שכל מי שיריץ את הפרויקט יוכל להקים סביבה זהה בקלות.  
-- במקביל הבנו כיצד יש לבנות את מבנה הפרויקט כך שיהיה גנרי, גמיש וקל להרצה מכל מחשב, בהתאם להנחיות ההגשה.  
+## 1. 💻 Initial Installations on Mac Computer
+- We performed initial analysis of all installation requirements for the virtual environment. We combined two existing README files (from installation instructions we received) with explanations we got in chat to understand how to perform installations on macOS, including creating virtual environment, installing Ollama and local health checking.
+  [environment_setup_macOS.png](screenshot_images/environment_setup_macOS.png)
+- Then we created a comprehensive and accurate `requirements.txt` file, so anyone running the project can set up an identical environment easily.
+- In parallel we understood how to build the project structure to be generic, flexible and easy to run from any computer, according to submission guidelines.
   [general_structure_understanding.png](screenshot_images/general_structure_understanding.png)
 
-## 2. 🧠 שלב הרעיון, האפיון והתיעוד  
-- הגדרנו את הצורך המרכזי של הפרויקט ואת המטרות שהמערכת נועדה להשיג.  
+## 2. 🧠 Idea Stage, Specification and Documentation
+- We defined the system's central need and goals the system aims to achieve.
 [First_project_demand.png](screenshot_images/First_project_demand.png)
-- פיתחנו את מסמך ה־PRD הראשוני, ולאורך הדרך עידכנו אותו כך שיהיה מקצועי, מדויק ותואם את הפתרון שבנינו בפועל.  
-  [First_PRD_Demand.png](screenshot_images/First_PRD_Demand.png)  
-  [PRD_adjustments.png](screenshot_images/PRD_adjustments.png)  
-- גיבשנו את מבנה כל מסמכי ה־documentation במקביל לפיתוח, כדי לשמור על אחידות ותיאום בין הפרויקט למסמכים.  
-  [documentation_files_structure.png](screenshot_images/documentation_files_structure.png)  
-  [documentation_files_structure_adjustments.png](screenshot_images/documentation_files_structure_adjustments.png)  
-- ווידאנו עקביות מלאה בין כל המסמכים: PRD, Architecture, Installation & Testing, ו־Prompting.  
+- We developed the initial PRD document, and along the way updated it to be professional, accurate and matching the solution we actually built.
+  [First_PRD_Demand.png](screenshot_images/First_PRD_Demand.png)
+  [PRD_adjustments.png](screenshot_images/PRD_adjustments.png)
+- We shaped the structure of all documentation documents in parallel with development, to maintain consistency and coordination between project and documents.
+  [documentation_files_structure.png](screenshot_images/documentation_files_structure.png)
+  [documentation_files_structure_adjustments.png](screenshot_images/documentation_files_structure_adjustments.png)
+- We ensured complete consistency between all documents: PRD, Architecture, Installation & Testing, and Prompting.
   [documentation_flow_consistency.png](screenshot_images/documentation_flow_consistency.png)
 ---
 
-## 3. 🏗️ בדיקת הארכיטקטורה והתאמות לוגיות  
-- בחנו את שלמות הארכיטקטורה אל מול הדרישות המקוריות, והשווינו תוצאות בין ChatGPT ו־Claude לקבלת פרספקטיבות נוספות.  
-  [Architecture_validation_claude.png](screenshot_images/Architecture_validation_claude.png)  
-- יישמנו שיפורים ועדכונים במבנה התיקיות, בקובצי השירותים (Services), ובקונפיגורציה הכללית של המערכת בהתאם לממצאים.
+## 3. 🏗️ Architecture Review and Logic Adaptations
+- We examined architecture completeness against original requirements, and compared results between ChatGPT and Claude to get additional perspectives.
+  [Architecture_validation_claude.png](screenshot_images/Architecture_validation_claude.png)
+- We implemented improvements and updates in directory structure, service files (Services), and system's general configuration according to findings.
 
 ---
 
-## 4. ⚙️ בניית טסטים ובדיקות תקינות  
-1. בדקנו אילו בדיקות קיימות בארכיטקטורה הראשונית והאם הן מספקות.  
-   [unit_tests.png](screenshot_images/unit_tests.png)  
-2. העמקנו בהבנת ההבדלים בין סוגי בדיקות ובנינו מערך Unit Tests מסודר.  
-   [unit_tests_undersanding.png](screenshot_images/unit_tests_undersanding.png)  
-3. ארגנו את כל הבדיקות לפי קטגוריות ותיקיות — בדיקות API, שירותים, ו־Preflight.  
-   [Tests_structure.png](screenshot_images/Tests_structure.png)  
-4. יצרנו זרימת בדיקה אחידה לכל השלבים (כולל בדיקות סביבה) וכתבנו Makefile שמאפשר להריץ את כל המערכת והבדיקות בלחיצה אחת.  
-5. עדכנו את מסמך `Installation_and_Testing.md` כך שישקף את כל שלבי הבדיקה החדשים.
+## 4. ⚙️ Building Tests and Health Checks
+1. We checked which tests exist in initial architecture and whether they are sufficient.
+   [unit_tests.png](screenshot_images/unit_tests.png)
+2. We deepened understanding of differences between test types and built organized Unit Tests array.
+   [unit_tests_undersanding.png](screenshot_images/unit_tests_undersanding.png)
+3. We organized all tests by categories and directories — API tests, services, and Preflight.
+   [Tests_structure.png](screenshot_images/Tests_structure.png)
+4. We created unified test flow for all stages (including environment checks) and wrote Makefile allowing running entire system and tests with one click.
+5. We updated `Installation_and_Testing.md` document to reflect all new testing stages.
 
 ---
 
 
-## 5. 🗂️ עדכון מסמכי התיעוד  
-- עדכנו את מסמך ה־PRD כך שישקף את הארכיטקטורה הסופית ואת תהליך הפיתוח כולו.  
-  [PRD_final_adjustmnet.png](screenshot_images/PRD_final_adjustmnet.png)  
-- כתבנו מסמך README המשמש כעמוד נחיתה לפרויקט כולו, עם קישורים נוחים לכל המסמכים הנלווים.
+## 5. 🗂️ Documentation Updates
+- We updated PRD document to reflect final architecture and entire development process.
+  [PRD_final_adjustmnet.png](screenshot_images/PRD_final_adjustmnet.png)
+- We wrote README document serving as landing page for entire project, with convenient links to all accompanying documents.
 
 ---
 
-## 6. 🎨 שיפור ה-UI  
-- הגרסה הראשונית של ה־UI נבנתה במבנה בסיסי ופשוט.  
-  [first_ui.png](screenshot_images/first_ui.png)  
-- הוספנו פיצ’רים פונקציונליים כמו בדיקת חיבור ל־API, בחירת מודל, וניקוי שיחה, החזרת ״התראה״ במידה והמודל מחזיר תשובה ריקה וזה לא שגיאה בהפעלה.  
-  [UI_adjustments.png](screenshot_images/UI_adjustments.png)  
-- לאחר מכן עיצבנו מחדש את כל הממשק כך שיהיה אסתטי ונוח למשתמש, כולל הוספת הצגת זמני הודעה, כפתורי העתקה ועיצוב מאוזן.  
-  [Finale_UI_1.png](screenshot_images/Finale_UI_1.png)  
-  [Final_UI_2.png](screenshot_images/Final_UI_2.png)  
-- כל שינוי לווה בבדיקות תקינות וחיבור מול ה־Backend כדי לוודא זרימת מידע תקינה.
+## 6. 🎨 UI Improvement
+- Initial UI version was built in basic and simple structure.
+  [first_ui.png](screenshot_images/first_ui.png)
+- We added functional features like API connection check, model selection, and conversation clearing, returning "alert" if model returns empty response and this is not an operation error.
+  [UI_adjustments.png](screenshot_images/UI_adjustments.png)
+- Then we redesigned the entire interface to be aesthetic and user-friendly, including adding message time display, copy buttons and balanced design.
+  [Finale_UI_1.png](screenshot_images/Finale_UI_1.png)
+  [Final_UI_2.png](screenshot_images/Final_UI_2.png)
+- Each change was accompanied by health checks and connection to Backend to ensure proper data flow.
 
 
-## 7. 🧾 בדיקות סופיות, תיקונים ועדכון כלל המסמכים  
-- סיימנו להכין ולבדוק את כל המסמכים, כולל Prompting ו־Screenshots & Demonstrations.  
-- ביצענו בדיקות סופיות לכל המערכת, כולל כל הפונקציות, הטסטים, התקינות הכללית והנראות.  
-- הוכן מאגר Git repository מסודר, ונבדק שכל הקבצים הנדרשים נכללים בו וניתן להריץ את הפרויקט במלואו מכל סביבה.
+## 7. 🧾 Final Testing, Fixes and Full Documentation Update
+- We finished preparing and checking all documents, including Prompting and Screenshots & Demonstrations.
+- We performed final tests for entire system, including all functions, tests, general health and appearance.
+- Organized Git repository was prepared, and verified that all required files are included and project can be fully run from any environment.
 
 
-## 8. 🧩 אינטגרציה בין כלי AI  
-- במהלך הפיתוח נעשה שימוש בכמה מערכות בינה מלאכותית — ChatGPT, Ollama ו־Claude — במטרה לוודא תשובות, לבדוק יעילות ותקינות קוד, ולבחון רעיונות נוספים שאחד הכלים לא הציע.  
-- השילוב ביניהם אפשר קבלת פרספקטיבות שונות והביא לתוצאה יציבה ומדויקת יותר ממה שכל כלי היה מסוגל לספק לבדו.
-
----
-
-## 9. 📈 למידה ושיפור בתהליך ה־Prompting  
-לאורך הדרך למדנו ש־prompt אפקטיבי חייב לכלול **הקשר (reference)** ברור למה שנעשה עד כה, כדי לאפשר למודל לבנות על בסיס ידע קיים ולא לענות בצורה כללית.  
-גילינו שעדיף לנסח את ההנחיות בצורה מוכוונת תפקיד — להגדיר למודל מהו תפקידו, אילו תנאים ומגבלות עליו לשמור, ואיך בדיוק נרצה שהתוצר הסופי ייראה.  
-שיטה זו שיפרה משמעותית את איכות התגובות ואת הדיוק של התוצרים שקיבלנו.
+## 8. 🧩 Integration Between AI Tools
+- During development, several artificial intelligence systems were used — ChatGPT, Ollama and Claude — to verify answers, check code efficiency and health, and examine additional ideas that one tool didn't suggest.
+- The combination between them allowed getting different perspectives and led to a more stable and accurate result than any single tool could provide alone.
 
 ---
 
-## 10. 🔚 סיכום ותובנות  
-- כלי ה־AI שימשו מרכיב מרכזי בתהליך הפיתוח — הן בבניית הארכיטקטורה, הן בעזרה בקוד ובבדיקות, והן בייעול ובשיפור התיעוד.  
-- העבודה עם כלי AI הפכה את תהליך הפיתוח לשיתופי, ממוקד ויעיל יותר.  
-- יצירת prompts מדויקים עם הקשר ותפקיד מוגדר הובילה לתוצאות עקביות וברמה גבוהה.  
-- השימוש ב־AI שיפר את איכות הפיתוח, את התיעוד ואת חוויית העבודה הכוללת בפרויקט.  
-- הפרויקט מדגים כיצד שילוב חכם של בינה מלאכותית בתהליך הפיתוח יכול להעלות את הרמה המקצועית ולחסוך זמן רב.
+## 9. 📈 Learning and Improvement in Prompting Process
+Throughout we learned that effective prompt must include clear **context (reference)** to what has been done so far, to allow the model to build on existing knowledge base and not answer generally.
+We discovered it's better to formulate instructions in a role-oriented manner — define to the model what its role is, which conditions and constraints it must maintain, and exactly how we want the final output to look.
+This method significantly improved response quality and precision of outputs we received.
 
-</div>
+---
+
+## 10. 🔚 Summary and Insights
+- AI tools served as central component in development process — both in building architecture, in helping with code and tests, and in streamlining and improving documentation.
+- Working with AI tools made the development process more collaborative, focused and efficient.
+- Creating precise prompts with context and defined role led to consistent and high-level results.
+- AI use improved development quality, documentation and overall project work experience.
+- The project demonstrates how smart integration of artificial intelligence in development process can raise professional level and save considerable time.
