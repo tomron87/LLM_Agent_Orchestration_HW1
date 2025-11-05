@@ -1,109 +1,358 @@
-# ======================
+# ==============================================
 # 🐍 Python Artifacts
-# ======================
+# ==============================================
 __pycache__/
 *.py[cod]
+*$py.class
 *.pyo
 *.pyd
-*.egg-info/
-.build/
-dist/
+*.so
+
+# Distribution / packaging
+.Python
 build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 *.spec
 
-# ======================
+# PyInstaller
+*.manifest
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ==============================================
 # 🧪 Virtual Environments
-# ======================
+# ==============================================
 .venv/
 venv/
+ENV/
+env/
 .conda/
-.ipynb_checkpoints/
+.pyenv/
+pipenv/
+.pipenv/
 
-# ======================
-# 🔐 Environment Files
-# ======================
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb_checkpoints/
+
+# ==============================================
+# 🔐 Environment & Secrets (CRITICAL!)
+# ==============================================
 .env
 .env.*
+.env.local
+.env.*.local
 !.env.example
 
-# ======================
-# ⚙️ OS / IDE
-# ======================
+# Secrets
+secrets.toml
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx
+
+# API keys (just in case)
+*_api_key.txt
+*_secret.txt
+
+# ==============================================
+# ⚙️ Operating System Files
+# ==============================================
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ==============================================
+# 💻 IDEs and Editors
+# ==============================================
+# Visual Studio Code
 .vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# PyCharm / IntelliJ IDEA
 .idea/
+*.iml
+*.ipr
+*.iws
+.idea_modules/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
 *.swp
 *.swo
+*~
+.*.sw[a-p]
 
-# ======================
-# 📦 App Data / Temp / Logs
-# ======================
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Eclipse
+.project
+.pydevproject
+.settings/
+
+# ==============================================
+# 📦 Application Data / Temporary Files / Logs
+# ==============================================
 logs/
-tmp/
-cache/
 *.log
+log/
+tmp/
+temp/
+cache/
+.cache/
+*.tmp
+*.bak
+*.backup
+*.old
+
+# Specific __pycache__ directories (redundant but explicit)
 app/__pycache__/
 scripts/__pycache__/
 tests/__pycache__/
 ui/__pycache__/
 
-# מסדי נתונים לוקאליים (נוצרים בזמן ריצה)
+# Local databases (created at runtime)
 app/db/*.sqlite
+app/db/*.sqlite3
 app/db/*.db
 app/db/*.bak
+*.db-journal
 
-# ======================
-# 🧰 Streamlit & UI
-# ======================
+# Session files
+*.session
+*.session.*
+
+# ==============================================
+# 🧰 Streamlit & UI Specific
+# ==============================================
 .streamlit/
+.streamlit/secrets.toml
+.streamlit/*.json
 .ui_state/
 ui/.streamlit/secrets.toml
 ui/.streamlit/*.json
 ui/.cache/
 ui/tmp/
+ui/cache/
 
-# שומרים קונפיג בלבד (לא מכיל מידע רגיש)
+# Keep config only (doesn't contain sensitive info)
+!.streamlit/config.toml
 !ui/.streamlit/config.toml
 
-# ======================
-# 🧪 Tests & Reports
-# ======================
+# ==============================================
+# 🧪 Testing & Coverage
+# ==============================================
 .pytest_cache/
 .coverage
+.coverage.*
 coverage.xml
+*.cover
+.hypothesis/
+.cache
 htmlcov/
 test_results/
 .tox/
+.nox/
+nosetests.xml
+test-results/
+junit/
+*.pytest_cache/
 
-# ======================
-# 🧩 Linters & Type Checkers
-# ======================
+# Test output files
+test_output/
+test_reports/
+.test_cache/
+
+# ==============================================
+# 🔍 Linters, Formatters & Type Checkers
+# ==============================================
 .mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
 .ruff_cache/
+.pylint.d/
+.flake8
+.pyre/
 
-# ======================
-# 🤖 Model / Ollama Cache
-# ======================
+# ==============================================
+# 🤖 LLM Models & Ollama Cache
+# ==============================================
 ollama_models/
 ollama_cache/
+models/
 *.bin
 *.pt
+*.pth
 *.ckpt
+*.safetensors
+*.gguf
+*.ggml
 
-# ======================
-# 🔧 Local Dev Tools / Outputs
-# ======================
+# Embeddings cache
+embeddings/
+.embeddings/
+vector_store/
+.chroma/
+
+# LangChain cache
+.langchain/
+langchain_cache/
+
+# ==============================================
+# 🔧 Development Tools & Local Outputs
+# ==============================================
 .preflight_results.json
 .local/
-.env.local
+.scratch/
+.debug/
 
-# ======================
-# 📄 Documentation outputs
-# ======================
+# Profiling data
+*.prof
+*.lprof
+*.pstats
+
+# ==============================================
+# 📄 Documentation & Generated Files
+# ==============================================
+# Generated documentation
+docs/_build/
+docs/.doctrees/
+site/
+
+# Office files (generated reports)
 *.pdf
 *.docx
 *.rtf
 *.xlsx
 *.csv
-*.tmp
-*.bak
+
+# Keep example files
+!docs/*.pdf
+!documentation/screenshot_images/*.png
+!documentation/screenshot_images/*.jpg
+
+# Compiled documentation
+_build/
+_static/
+_templates/
+
+# ==============================================
+# 🐳 Docker & Containers
+# ==============================================
+docker-compose.override.yml
+.dockerignore
+*.dockerfile.local
+
+# ==============================================
+# 📦 Package Managers & Dependencies
+# ==============================================
+# npm (if using any Node tools for docs/frontend)
+node_modules/
+package-lock.json
+yarn.lock
+
+# pip
+pip-wheel-metadata/
+
+# Poetry
+poetry.lock
+
+# ==============================================
+# 🚀 Deployment & CI/CD
+# ==============================================
+# Kubernetes
+*.kubeconfig
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Ansible
+*.retry
+
+# ==============================================
+# 🗂️ Miscellaneous
+# ==============================================
+# Backup files
+*.bkp
+*.orig
+
+# Archives
+*.zip
+*.tar.gz
+*.tar
+*.rar
+*.7z
+
+# Keep certain archives in specific directories
+!docs/*.zip
+!documentation/*.pdf
+
+# Local configuration overrides
+config.local.json
+settings.local.json
+
+# Performance monitoring
+performance_logs/
+metrics/
+
+# Data files (avoid committing large datasets)
+data/
+*.parquet
+*.feather
+*.h5
+*.hdf5
+
+# Keep small example data
+!data/examples/
+!data/test_fixtures/
