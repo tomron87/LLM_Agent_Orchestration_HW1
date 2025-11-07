@@ -4,7 +4,7 @@ FastAPI Application Entry Point
 This module initializes and configures the FastAPI application,
 including middleware, CORS, and API routers.
 
-Author: Igor Nazarenko
+Authors: Igor Nazarenko, Tom Ron, and Roie Gilad
 Course: LLMs and MultiAgent Orchestration
 """
 
