@@ -74,23 +74,26 @@ User → Streamlit UI → FastAPI (Chat Router) → Ollama Client → Ollama Ser
 
 **Main directory structure:**
 ```
-HW1_ai_chat_bot/
+HW1/
 ├── app/
-│   ├── api/routers/chat.py
+│   ├── api/
+│   │   ├── routers/chat.py
+│   │   └── deps.py
 │   ├── core/config.py
-│   ├── services/ollama_client.py
-│   ├── services/chat_service.py
+│   ├── services/
+│   │   ├── ollama_client.py
+│   │   └── chat_service.py
 │   └── main.py
 ├── ui/streamlit_app.py
 ├── tests/
 ├── scripts/
-└── documentation/
+├── documentation/
 ├── README.md
 ├── Makefile
 ├── .env.example
 ├── .env
 ├── requirements.txt
-└──  .gitignore
+└── .gitignore
 ```
 
 ---

@@ -8,13 +8,23 @@ The document focuses on architecture and does not include detailed installation 
 ## ⚙️ Complete Directory Structure
 
 ```
-HW1_ai_chat_bot/
+HW1/
 ├── app/
-│   ├── api/routers/chat.py
-│   ├── core/config.py
-│   ├── services/ollama_client.py
-│   ├── services/chat_service.py
-│   └── main.py
+│   ├── api/
+│   │   ├── routers/
+│   │   │   ├── chat.py
+│   │   │   └── __init__.py
+│   │   ├── deps.py
+│   │   └── __init__.py
+│   ├── core/
+│   │   ├── config.py
+│   │   └── __init__.py
+│   ├── services/
+│   │   ├── ollama_client.py
+│   │   ├── chat_service.py
+│   │   └── __init__.py
+│   ├── main.py
+│   └── __init__.py
 ├── ui/
 │   └── streamlit_app.py
 ├── tests/
@@ -26,7 +36,8 @@ HW1_ai_chat_bot/
 │   ├── test_ollama_client_unit.py
 │   ├── test_ollama_models_integration.py
 │   ├── conftest.py
-│   └── pytest.ini
+│   ├── pytest.ini
+│   └── __init__.py
 ├── scripts/
 │   ├── preflight.py
 │   └── check_langchain.py
@@ -35,13 +46,14 @@ HW1_ai_chat_bot/
 │   ├── Architecture.md
 │   ├── Installation_and_Testing.md
 │   ├── Prompting_and_Developing.md
-│   └── Screenshots_and_Demonstrations.md
+│   ├── Screenshots_and_Demonstrations.md
+│   └── screenshot_images/
 ├── README.md
 ├── Makefile
 ├── .env.example
 ├── .env
 ├── requirements.txt
-└──  .gitignore
+└── .gitignore
 ```
 
 ---

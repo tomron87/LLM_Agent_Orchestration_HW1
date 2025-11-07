@@ -56,7 +56,7 @@ This project is a **production-ready local AI chat system** that enables interac
 - **Assignment:** Assignment 1 – AI Chat Bot
 - **Course:** LLMs and MultiAgent Orchestration
 - **Instructor:** Dr. Yoram Gal
-- **Students:** Igor Nazarenko and Tom Ron
+- **Students:** Igor Nazarenko, Tom Ron, and 
 - **Submission Date:** November 2025
 - **Repository:** [https://github.com/tomron87/LLM_Agent_Orchestration_HW1](https://github.com/tomron87/LLM_Agent_Orchestration_HW1)
 

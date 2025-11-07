@@ -8,7 +8,7 @@ This document explains **step-by-step** how to set up environment, run tests (in
 
 ## 🧭 Before You Start — Verify Correct Directory Location
 All commands in this guide should be run from **project root directory**:
-`HW1_ai_chat_bot/`
+`HW1/`
 
 You should copy the commands and run them in **terminal** when you are in this directory.
 You can verify this using command:
@@ -18,7 +18,7 @@ pwd   # macOS/Linux
 cd    # Windows
 ```
 Output should end with:
-.../HW1_ai_chat_bot
+.../HW1
 
 ---
 
@@ -54,6 +54,8 @@ source .venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
+
+> **Note**: `requirements.txt` uses flexible version specifications (e.g., `>=1.0.0`) to ensure compatibility across different environments and allow pip to resolve the best available versions. This makes the project more portable and maintainable.
 
 ### 3) Configure .env file
 Create `.env` (or copy from `.env.example`) and configure:
@@ -177,10 +179,10 @@ Expected result: Printing short response from model. If fails — clear message 
 
 ---
 
-# ▶️ System Execution and Running — HW1_ai_chat_bot
+# ▶️ System Execution and Running — HW1
 
 Following section guides **step-by-step** how to run API and UI, and how to verify everything works using endpoint checks.
-Assuming you're already in project root directory (`HW1_ai_chat_bot`) and virtual environment active.
+Assuming you're already in project root directory (`HW1`) and virtual environment active.
 
 ---
 

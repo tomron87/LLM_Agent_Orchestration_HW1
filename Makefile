@@ -1,9 +1,9 @@
 .PHONY: help preflight install ollama api ui test test-unit test-integration all clean
 
 # ============================================================
-# Makefile for HW1_ai_chat_bot
-# זרימה מדויקת בהתאם ל-documentation/Installation_and_Testing.md
-# סדר ההפעלה: preflight -> install -> ollama -> api -> ui
+# Makefile for HW1
+# Flow according to documentation/Installation_and_Testing.md
+# Execution order: preflight -> install -> ollama -> api -> ui
 # ============================================================
 
 HOST ?= 127.0.0.1
