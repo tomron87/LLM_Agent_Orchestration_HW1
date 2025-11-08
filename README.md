@@ -1567,7 +1567,7 @@ This project was developed as an academic assignment. However, contributions are
 
 ## 📄 License
 
-This project is provided **as-is for educational purposes** as part of the "LLMs and MultiAgent Orchestration" course at [University Name].
+This project is provided **as-is for educational purposes** as part of the "LLMs and MultiAgent Orchestration" course at Reichman University.
 
 **Usage Rights:**
 - ✅ Use for learning and education
