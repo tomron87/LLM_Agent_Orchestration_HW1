@@ -1623,11 +1623,6 @@ This project is provided **as-is for educational purposes** as part of the "LLMs
    - Expected vs actual behavior
    - Environment details (`python --version`, OS, etc.)
 
-### Community
-
-- **GitHub Discussions**: [LLM_Agent_Orchestration_HW1/discussions](https://github.com/tomron87/LLM_Agent_Orchestration_HW1/discussions)
-- **Issues**: [LLM_Agent_Orchestration_HW1/issues](https://github.com/tomron87/LLM_Agent_Orchestration_HW1/issues)
-
 ---
 
 ## 📈 Project Stats
