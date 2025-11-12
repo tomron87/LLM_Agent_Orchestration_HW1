@@ -49,6 +49,15 @@ def test_ollama_client_end_to_end_unit(monkeypatch, exp):
     exp.expect("ping True/False toggles; chat returns 'OK' with correct URL/payload")
     exp.actual(f"url={captured['url']} payload_ok={payload['model']=='mistral'}")
 
+    # default temperature path when None provided
+    answer = oc.chat(
+        messages=[{"role": "user", "content": "hi"}],
+        model="mistral",
+        temperature=None,
+        stream=False,
+    )
+    assert captured["json"]["options"]["temperature"] == 0.2
+
     def fake_post_500(url, json=None, timeout=60):
         return DummyResp(500, {"error": "boom"})
     monkeypatch.setattr(oc.requests, "post", fake_post_500)

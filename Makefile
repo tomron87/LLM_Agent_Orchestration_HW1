@@ -25,6 +25,7 @@ help:
 	@echo "  test              בדיקות (pytest)"
 	@echo "  test-unit         בדיקות“בדיקות יחידה (not integration)”"
 	@echo "  test-integration  בדיקות אינטגרציה בלבד"
+	@echo "  coverage          pytest --cov=app --cov=ui --cov-report=term-missing --cov-report=html"
 	@echo "  all               הפעלה מלאה: preflight -> install -> ollama -> api(bg) -> ui(fg)"
 	@echo "  clean             ניקוי קבצי cache של Python"
 	@echo ""
@@ -78,6 +79,9 @@ test-unit:
 
 test-integration:
 	pytest -q -k "integration"
+
+coverage:
+	pytest --cov=app --cov=ui --cov-report=term-missing --cov-report=html
 
 # === הפעלה מקצה לקצה: Preflight -> Install -> Ollama -> API(bg) -> UI(fg) ===
 all: preflight install ollama

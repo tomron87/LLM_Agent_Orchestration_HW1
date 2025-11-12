@@ -57,7 +57,9 @@ class ChatService:
             self,
             messages: List[Dict[str, str]],
             model: Optional[str] = None,
-            session_id: Optional[str] = None
+            session_id: Optional[str] = None,
+            temperature: Optional[float] = None,
+            stream: bool = False
     ) -> Dict[str, str]:
         """
         Process a chat request through the complete business logic flow.
@@ -79,6 +81,7 @@ class ChatService:
                 - answer: Generated response text
                 - model: Model name used
                 - notice: Optional warning/notice message
+                - temperature: Applied decoding temperature (implicit through Ollama client)
 
         Raises:
             ModelNotFoundError: If specified model is not installed
@@ -97,7 +100,13 @@ class ChatService:
         logger.info(f"Processing chat with model: {selected_model}, messages: {len(messages)}")
 
         # Step 2: Validate model availability
-        if not self._is_model_available(selected_model):
+        try:
+            available = self._is_model_available(selected_model)
+        except self.ollama_client.OllamaUnavailableError:
+            logger.exception("Ollama unreachable while checking model availability")
+            raise
+
+        if not available:
             logger.warning(f"Model not found: {selected_model}")
             return self._build_model_not_found_response(selected_model, session_id)
 
@@ -106,8 +115,16 @@ class ChatService:
 
         # Step 4: Call LLM
         try:
-            answer = self.ollama_client.chat(messages, model=selected_model)
+            answer = self.ollama_client.chat(
+                messages,
+                model=selected_model,
+                temperature=temperature,
+                stream=stream
+            )
             logger.info(f"Received answer of length: {len(answer) if answer else 0}")
+        except self.ollama_client.OllamaUnavailableError:
+            logger.exception("Ollama unreachable during chat call")
+            raise
         except Exception as e:
             logger.exception("Error calling Ollama")
             raise  # Re-raise for API layer to handle as HTTPException

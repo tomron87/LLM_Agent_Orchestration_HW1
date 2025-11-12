@@ -25,6 +25,14 @@ Demonstration of chat interface in action – user sends message, system returns
 
 > The screenshot shows consistent and clear design between user messages and system responses.
 
+### 🎚️ Temperature Control Highlight
+
+After wiring the decoding controls end-to-end, the UI now exposes a temperature slider so users can choose between deterministic (0.0) and creative (1.0) responses directly from the chat screen.
+
+📸 [temperature_value_setup.png](screenshot_images/temperature_value_setup.png)
+
+> The slider caption explains the trade-off: low values favor accuracy and repeatability, high values add creativity at the cost of consistency.
+
 ---
 
 ## ⚙️ Stage 3 – Model Management and API Connection
@@ -62,6 +70,18 @@ Scenario where request succeeds but model returns empty response.
 📸 [error_.empty_answer.png](screenshot_images/error_.empty_answer.png)
 
 > Screenshot shows alert about empty response — without execution or connection error occurring.
+
+### 📊 Automated Coverage Report (`make coverage`)
+
+Demonstration of the CLI workflow that generates the official coverage numbers cited in README/PRD. The `make coverage` target runs:
+
+```bash
+pytest --cov=app --cov=ui --cov-report=term-missing --cov-report=html
+```
+
+📸 [make_coverage_test.png](screenshot_images/make_coverage_test.png)
+
+> The screenshot shows the terminal summary produced by `make coverage`, confirming the 35-test suite (33 unit + 2 integration) and the generation of the HTML report under `htmlcov/index.html`.
 
 ---
 

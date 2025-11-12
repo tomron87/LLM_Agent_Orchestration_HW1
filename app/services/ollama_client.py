@@ -14,9 +14,15 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_TEMPERATURE = 0.2
 
 class OllamaConnectionError(Exception):
     """Raised when unable to connect to Ollama server."""
+    pass
+
+
+class OllamaUnavailableError(OllamaConnectionError):
+    """Raised when Ollama cannot be reached during model checks."""
     pass
 
 
@@ -94,12 +100,15 @@ def has_model(model_name: str) -> bool:
 
         return exists
 
+    except (requests.Timeout, requests.ConnectionError, OSError) as e:
+        logger.error(f"Connectivity issue while checking model availability: {e}")
+        raise OllamaUnavailableError(str(e)) from e
     except Exception as e:
         logger.error(f"Error checking model availability: {e}")
         return False
 
 
-def chat(messages, model=None, temperature=0.2, stream=False, timeout=60):
+def chat(messages, model=None, temperature: Optional[float] = None, stream: bool = False, timeout=60):
     """
     Send chat request to Ollama and get response.
 
@@ -109,8 +118,8 @@ def chat(messages, model=None, temperature=0.2, stream=False, timeout=60):
     Args:
         messages: List of message dicts with 'role' and 'content' keys
         model: Model name to use (defaults to OLLAMA_MODEL from .env)
-        temperature: Sampling temperature (0.0 = deterministic, 1.0 = creative)
-        stream: Whether to stream response (not yet implemented)
+        temperature: Optional sampling temperature; defaults to 0.2 if not provided
+        stream: Whether to request streaming responses (not implemented server-side yet)
         timeout: HTTP timeout in seconds
 
     Returns:
@@ -121,13 +130,14 @@ def chat(messages, model=None, temperature=0.2, stream=False, timeout=60):
     """
     model = model or settings.ollama_model
     url = f"{settings.ollama_host}/api/chat"
+    effective_temperature = temperature if temperature is not None else DEFAULT_TEMPERATURE
 
     payload = {
         "model": model or settings.ollama_model,
         "messages": messages,
-        "stream": False,  # Streaming not yet implemented
+        "stream": bool(stream),  # Streaming not yet implemented
         "options": {
-            "temperature": temperature
+            "temperature": effective_temperature
         }
     }
 

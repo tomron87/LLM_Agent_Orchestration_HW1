@@ -66,15 +66,29 @@ def main():
     app_api_key = os.getenv("APP_API_KEY")
     ollama_host = os.getenv("OLLAMA_HOST")
     ollama_model = os.getenv("OLLAMA_MODEL")
+    api_url = os.getenv("API_URL")
 
     require("env var present: APP_API_KEY", bool(app_api_key), hint="Set APP_API_KEY in .env")
     # אל תאפשר ערך דמי
     ok("APP_API_KEY not default placeholder", app_api_key not in (None, "", "change-me"))
+    require(
+        "APP_API_KEY length >= 32 characters",
+        len(app_api_key or "") >= 32,
+        hint='Generate one via: python -c "import secrets; print(secrets.token_hex(32))"'
+    )
+    require(
+        "APP_API_KEY has sufficient entropy (>=10 unique characters)",
+        len(set(app_api_key or "")) >= 10,
+        hint="Use a freshly generated token; avoid repeating the same few characters"
+    )
 
     require("env var present: OLLAMA_HOST", bool(ollama_host), hint="Set OLLAMA_HOST in .env (e.g., http://127.0.0.1:11434)")
     ok("OLLAMA_HOST looks like URL", valid_http_url(ollama_host or ""))
 
     require("env var present: OLLAMA_MODEL", bool(ollama_model), hint="Set OLLAMA_MODEL in .env (e.g., phi or mistral)")
+
+    require("env var present: API_URL", bool(api_url), hint="Set API_URL in .env (e.g., http://127.0.0.1:8000/api/chat)")
+    ok("API_URL looks like URL", valid_http_url(api_url or ""))
 
     # 5) Ollama reachable (אופציונלי; לא נכשל אם לא)
     # עדיף להשתמש ב-requests כדי להיות חוצה פלטפורמות

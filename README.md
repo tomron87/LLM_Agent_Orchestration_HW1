@@ -43,7 +43,7 @@ This project is a **production-ready local AI chat system** that enables interac
 
 **Key Characteristics:**
 - ✅ **100% Local** - No cloud dependencies, complete privacy
-- ✅ **Production-Ready** - Comprehensive testing (22 tests), error handling, and validation
+- ✅ **Production-Ready** - Comprehensive testing (35 tests), error handling, and validation
 - ✅ **Modular Architecture** - Clean separation: API → Business Logic → Infrastructure
 - ✅ **Developer-Friendly** - Complete documentation, Makefile automation, preflight checks
 - ✅ **Type-Safe** - Pydantic schemas throughout, catching errors at validation time
@@ -71,9 +71,10 @@ This project is a **production-ready local AI chat system** that enables interac
 - **Health Monitoring** - Real-time system and model availability checks via `/api/health`
 - **Graceful Error Handling** - User-friendly error messages with detailed logging for debugging
 - **Session Management** - Unique session IDs for conversation tracking
+- **Decoding Controls** - Optional `temperature` parameter (0.0–1.0, default 0.2) respected end-to-end for deterministic vs. creative replies
 
 ### Developer Features
-- **Comprehensive Testing** - 22 tests covering all layers (unit + integration)
+- **Comprehensive Testing** - 35 tests covering all layers (33 unit + 2 integration)
 - **Automated Setup** - Single-command deployment via Makefile
 - **Preflight Checks** - Environment validation catches issues before startup
 - **Type Safety** - Pydantic schemas for request/response validation
@@ -125,6 +126,8 @@ The system follows a **three-layer architecture** with clear separation of conce
 └─────────────────┘
 ```
 
+> **UI Composition:** Visual layout/events live in `ui/streamlit_app.py`, while non-visual helpers (health checks, payload builders, history rendering) live in `ui/components.py`. Keeping them separate satisfies the “single responsibility” rubric without changing behavior.
+
 ### Data Flow
 
 1. **User** enters message in Streamlit UI
@@ -147,6 +150,8 @@ All `/api/chat` responses follow this schema:
   "notice": null                       // Optional user-facing notice (e.g., model not found)
 }
 ```
+
+> **Decoding Parameters:** Requests may include `temperature` (0.0–1.0). When omitted, the backend defaults to `0.2`, matching the production configuration described in the Parameter Sensitivity Analysis.
 
 ### Error Handling Strategy
 - **401** - Missing or invalid Bearer token
@@ -204,10 +209,13 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\Activate.ps1
 # 3. Install dependencies
 pip install --upgrade pip
 pip install -r requirements.txt
+# Optional extras (LangChain, notebooks, torch, etc.)
+# pip install -r requirements-optional.txt
 
 # 4. Configure environment (IMPORTANT: Set your own API key!)
 cp .env.example .env
-nano .env  # Edit: Set APP_API_KEY to a secure random value
+python -c "import secrets; print(secrets.token_hex(32))"  # Copy the output (64 hex chars)
+nano .env  # Paste value into APP_API_KEY (needs ≥32 chars w/ lots of unique characters)
 
 # 5. Install Ollama model (if not already done)
 ollama serve  # In separate terminal
@@ -220,16 +228,19 @@ python scripts/preflight.py
 make all
 ```
 
+> Preflight will fail with actionable errors if `APP_API_KEY` is shorter than 32 characters or reuses the same few characters—generate a new value with the snippet above whenever that happens.
+
 **Expected Result:**
 - API server starts on http://127.0.0.1:8000
 - UI opens automatically in browser at http://127.0.0.1:8501
 - Health check at http://127.0.0.1:8000/api/health returns `{"status":"ok"}`
 
 **First Steps After Launch:**
-1. In the UI sidebar, enter your `APP_API_KEY` (from `.env`)
+1. UI automatically reads `APP_API_KEY` (and `API_URL`) from `.env`; if they're missing you'll see a red error banner—update `.env` and restart.
 2. Select model (e.g., "phi")
-3. Click "Check API Connection" to verify setup
-4. Start chatting!
+3. Use the temperature slider to choose determinism vs. creativity (0.0 = מדויק, 1.0 = יצירתי)
+4. Click "Check API Connection" to verify setup
+5. Start chatting!
 
 ---
 
@@ -261,17 +272,21 @@ source .venv/bin/activate
 ```bash
 pip install --upgrade pip
 pip install -r requirements.txt
+# Optional extras (LangChain, notebooks, torch, etc.)
+# pip install -r requirements-optional.txt
 ```
 
-**Installed packages:**
-- `fastapi` - Modern web framework
-- `uvicorn[standard]` - ASGI server with production optimizations
-- `streamlit` - UI framework
-- `pydantic` - Data validation
-- `python-dotenv` - Environment management
-- `pytest` - Testing framework
-- `requests` - HTTP client
-- `langchain` (optional) - For future RAG/agent features
+**Core packages (requirements.txt):**
+- `fastapi`, `uvicorn` – API server
+- `streamlit` – UI framework
+- `pydantic`, `python-dotenv`, `requests` – validation & config
+- `pytest`, `pytest-cov` – testing
+
+**Optional extras (requirements-optional.txt):**
+- LangChain/LangGraph stacks, transformers, vector DBs
+- Torch + pandas/numpy/scikit-learn + JupyterLab
+- Gradio experiments
+- Formatting/tooling (`black`, `flake8`, `isort`, `pylint`)
 
 ### Step 4: Install and Configure Ollama
 
@@ -325,8 +340,9 @@ cp .env.example .env
 
 ```dotenv
 # API Authentication (REQUIRED - CHANGE THIS!)
-# Generate secure key: python -c "import secrets; print(secrets.token_urlsafe(32))"
-APP_API_KEY=your-secure-random-key-here
+# Generate secure key (≥32 chars, high entropy):
+#   python -c "import secrets; print(secrets.token_hex(32))"
+APP_API_KEY=replace-with-64-char-hex-key
 
 # Ollama Configuration (defaults usually work)
 OLLAMA_HOST=http://127.0.0.1:11434
@@ -338,10 +354,11 @@ API_URL=http://127.0.0.1:8000/api/chat
 
 **Security Best Practices:**
 - ⚠️ **Never commit `.env` to git** (already in `.gitignore`)
-- ✅ Use a strong random API key (32+ characters)
-- ✅ Generate key with: `python -c "import secrets; print(secrets.token_urlsafe(32))"`
+- ✅ Use a strong random API key (≥32 characters with at least ~10 unique symbols)
+- ✅ Generate keys with: `python -c "import secrets; print(secrets.token_hex(32))"`
+- ✅ Rotate keys periodically (preflight enforces the policy so weak keys fail fast)
 - ✅ Different keys for dev/staging/production
-- ⚠️ Don't use `change-me` or simple passwords
+- ⚠️ Don't use `change-me`, dictionary words, or short passwords
 
 ### Step 6: Run Preflight Check
 
@@ -358,6 +375,8 @@ python scripts/preflight.py
 [OK] Model 'phi' installed
 [OK] Environment variables configured
 [OK] APP_API_KEY is set (not default)
+[OK] APP_API_KEY length >= 32 characters
+[OK] APP_API_KEY has sufficient entropy (>=10 unique characters)
 [OK] All ports available (8000, 8501, 11434)
 ```
 
@@ -432,6 +451,7 @@ INFO:     Application startup complete.
 ```bash
 streamlit run ui/streamlit_app.py --server.port 8501
 ```
+> This launches the Streamlit layout (`ui/streamlit_app.py`) along with the shared helper module (`ui/components.py`) that handles health checks, payload building, and history rendering.
 
 **Streamlit will:**
 - Automatically open browser to http://localhost:8501
@@ -490,8 +510,8 @@ Visit **http://127.0.0.1:8000/docs** in your browser for:
 #### 4. Use the Streamlit UI
 
 1. Open browser to http://localhost:8501
-2. **Sidebar Configuration:**
-   - Enter your API key (from `.env` APP_API_KEY)
+2. **Sidebar Overview:**
+   - `APP_API_KEY` + `API_URL` are loaded directly from `.env`; if either is missing, the UI blocks usage with an error.
    - Select model (should show "phi" or whichever you installed)
    - Click "Check API Connection" → should show "✅ Connected"
 3. **Start Chatting:**
@@ -555,7 +575,7 @@ Authorization: Bearer YOUR_API_KEY
     {"role": "user", "content": "Your question here"}
   ],
   "model": "phi",          // Optional: override default model
-  "temperature": 0.7,      // Optional: 0.0-1.0, default 0.2
+  "temperature": 0.7,      // Optional: 0.0-1.0; honored end-to-end (defaults to 0.2)
   "stream": false          // Optional: streaming not yet implemented
 }
 ```
@@ -575,6 +595,7 @@ Authorization: Bearer YOUR_API_KEY
 - `401` - Missing or invalid Bearer token
 - `422` - Invalid request schema
 - `500` - Internal server error
+- `503` - Ollama server unreachable (start `ollama serve` and retry)
 - `503` - Ollama service unavailable
 
 **Example with curl:**
@@ -604,7 +625,7 @@ Alternative: **http://127.0.0.1:8000/redoc** for ReDoc interface
 
 ## 🧪 Testing
 
-The project includes **22 comprehensive tests** covering all architectural layers.
+The project includes **35 comprehensive tests** (33 unit + 2 integration) covering all architectural layers.
 
 ### Quick Test Commands
 
@@ -634,8 +655,9 @@ pytest tests/test_auth_api.py -v
 pytest tests/test_auth_api.py::test_missing_token_returns_401 -v
 
 # Run tests with coverage report
-pytest --cov=app --cov-report=html
-# Open htmlcov/index.html in browser
+make coverage
+# (Runs: pytest --cov=app --cov=ui --cov-report=term-missing --cov-report=html)
+# Open htmlcov/index.html in browser for visual report
 ```
 
 ### Test Categories
@@ -647,12 +669,13 @@ These tests use mocking and **don't require Ollama** to be running:
 |-----------|-------|----------|
 | `test_auth_api.py` | 5 | Bearer token authentication (401 errors, schemes, validation) |
 | `test_chat_validation_api.py` | 5 | Request validation (Pydantic schemas, empty messages, type errors) |
-| `test_chat_happy_errors_api.py` | 3 | Happy path, error handling, model not found scenarios |
+| `test_chat_happy_errors_api.py` | 5 | Happy path, error handling, temperature passthrough, Ollama offline (503) |
 | `test_health_api.py` | 2 | Health endpoint consistency |
 | `test_config_settings.py` | 2 | Configuration loading, env var overrides |
 | `test_ollama_client_unit.py` | 3 | HTTP client behavior with mocked responses |
+| `test_streamlit_ui.py` | 11 | Streamlit UI smoke tests (load, sidebar actions, guard-rails, notices, timeouts) via `AppTest` |
 
-**Total Unit Tests:** 20
+**Total Unit Tests:** 33
 
 #### Integration Tests (Require Running Ollama)
 These tests communicate with **real Ollama server**:
@@ -664,6 +687,23 @@ These tests communicate with **real Ollama server**:
 **Total Integration Tests:** 2
 
 **Note:** Integration tests are automatically **SKIPPED** (not FAILED) if Ollama is not running.
+
+#### Notebook Data Validation (Research Artifacts)
+
+Validate that the committed CSVs powering `notebooks/Results_Analysis.ipynb` still match the documented schema:
+
+```bash
+python scripts/validate_notebooks.py
+```
+
+What it checks:
+- `notebooks/data/temperature_experiment.csv` exists
+- Column order matches the published schema
+- Exactly five rows (temperatures 0.0–1.0) with numeric values
+- Sample size stays consistent across rows
+- Temperatures remain sorted (no accidental reordering)
+
+> Graders can run this command (no Ollama needed) to confirm the notebook artifacts are reproducible without opening Jupyter.
 
 ### Understanding Test Output
 
@@ -691,16 +731,20 @@ tests/test_auth_api.py
 
 Run coverage analysis:
 ```bash
-pytest --cov=app --cov-report=term-missing --cov-report=html
+make coverage
+# Under the hood: pytest --cov=app --cov=ui --cov-report=term-missing --cov-report=html
 ```
 
-**Current coverage:**
-- Overall: ~85%
-- `app/api/`: 90%
-- `app/services/`: 88%
-- `app/core/`: 95%
+**Latest measurement (2025-11-12, macOS, Python 3.11.10):**
+- Overall: **89%** (315 statements / 34 missed) — reported by `make coverage`
+- `app/api/routers/chat.py`: 96%
+- `app/services/chat_service.py`: 87%
+- `app/services/ollama_client.py`: 80%
+- `ui/streamlit_app.py`: 91% (Streamlit `AppTest` covers sidebar actions, errors, and timeouts)
+- `ui/components.py`: Exercised indirectly via the same AppTests (health helpers, payload builder, history renderer)
+- HTML report location: `htmlcov/index.html` (auto-generated, already `.gitignore`d)
 
-View detailed HTML report: `open htmlcov/index.html`
+Integration tests in `tests/test_ollama_models_integration.py` automatically skip whenever `ollama serve` is not running locally; the latest run skipped both because `ping()` returned `False`.
 
 ### Testing Best Practices
 
@@ -721,7 +765,7 @@ All configuration managed through `.env` file:
 
 | Variable | Type | Description | Default | Required |
 |----------|------|-------------|---------|----------|
-| `APP_API_KEY` | string | Secret key for Bearer token auth | *None* | ✅ Yes |
+| `APP_API_KEY` | string | Secret key for Bearer token auth (≥32 chars, high entropy) | *None* | ✅ Yes |
 | `OLLAMA_HOST` | URL | Ollama server endpoint | `http://127.0.0.1:11434` | ✅ Yes |
 | `OLLAMA_MODEL` | string | Default model name | `phi` | ✅ Yes |
 | `API_URL` | URL | FastAPI endpoint for UI | `http://127.0.0.1:8000/api/chat` | ✅ Yes |
@@ -744,7 +788,7 @@ API_URL=http://127.0.0.1:8001/api/chat
 
 **UI on custom port:**
 ```bash
-streamlit run ui/streamlit_app.py --server.port 8502
+streamlit run ui/streamlit_app.py --server.port 8502  # loads helper module from ui/components.py
 ```
 
 **Using Makefile:**
@@ -912,8 +956,8 @@ curl -H "Authorization: Bearer your-key" http://127.0.0.1:8000/api/chat
 # 1. Ensure API key is not the placeholder
 nano .env  # Change APP_API_KEY to actual value
 
-# 2. Generate strong API key
-python -c "import secrets; print(secrets.token_urlsafe(32))"
+# 2. Generate strong API key (preflight enforces ≥32 chars)
+python -c "import secrets; print(secrets.token_hex(32))"
 
 # 3. Verify header format (must be "Bearer <token>")
 # Correct:   Authorization: Bearer abc123
@@ -924,7 +968,25 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 cat -A .env  # Look for hidden spaces/newlines
 ```
 
-#### 2. "Connection Refused" to Ollama
+#### 2. Preflight Fails: `APP_API_KEY length >= 32 characters` / `entropy`
+
+**Symptom:** `python scripts/preflight.py` exits with one (or both) of the new APP_API_KEY checks.
+
+**Solutions:**
+```bash
+# 1. Generate a compliant key (64 hex characters = 32 bytes of entropy)
+python -c "import secrets; print(secrets.token_hex(32))"
+
+# 2. Update .env with the new value
+nano .env  # Paste value into APP_API_KEY
+
+# 3. Re-run the preflight check
+python scripts/preflight.py
+```
+
+> Tip: The entropy check simply counts unique characters. Any freshly generated `token_hex(32)` value will pass immediately. Rotate the key whenever you share screenshots/logs.
+
+#### 3. "Connection Refused" to Ollama
 
 **Symptom:** Can't reach Ollama server, API returns 503
 
@@ -1095,7 +1157,7 @@ nano .env
 # Ensure allow_origins includes UI origin
 
 # 4. Restart Streamlit
-# Ctrl+C and rerun:
+# Ctrl+C and rerun (auto-imports helpers from ui/components.py):
 streamlit run ui/streamlit_app.py
 
 # 5. Clear Streamlit cache
@@ -1193,7 +1255,7 @@ logging.basicConfig(level=logging.DEBUG)
 # 2. Run Uvicorn with debug logs
 uvicorn app.main:app --reload --log-level debug
 
-# 3. Enable Streamlit debug mode
+# 3. Enable Streamlit debug mode (layout + helper module)
 streamlit run ui/streamlit_app.py --logger.level=debug
 
 # 4. Run tests with output
@@ -1230,8 +1292,8 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
-# Install development dependencies
-pip install pytest-cov black flake8 mypy
+# Optional: tooling, notebooks, LangChain, etc.
+# pip install -r requirements-optional.txt
 ```
 
 **2. Make changes:**
@@ -1293,7 +1355,7 @@ def process_message(
     Args:
         message: User input text
         model: Optional model override
-        temperature: Sampling temperature (0.0-1.0)
+        temperature: Sampling temperature (0.0-1.0, defaults to 0.2 when omitted)
 
     Returns:
         Dictionary with session_id, answer, model, notice
@@ -1305,6 +1367,17 @@ def process_message(
 ```
 
 ### Adding New Features
+
+**⚠️ Important**: Before adding new features, review the [Extensibility Guide](documentation/Extensibility_Guide.md) for best practices and established extension points.
+
+The system provides well-defined extension points for:
+- Adding new LLM providers (OpenAI, Claude, etc.)
+- Custom middleware (logging, rate limiting, metrics)
+- Response post-processing hooks
+- Custom Pydantic validators
+- Authentication extensions
+
+See **[documentation/Extensibility_Guide.md](documentation/Extensibility_Guide.md)** for detailed examples and complete implementation guides.
 
 **Example: Add new API endpoint**
 
@@ -1371,9 +1444,11 @@ LLM_Agent_Orchestration_HW1/
 │       └── ollama_client.py     # Ollama HTTP client
 │
 ├── ui/
-│   └── streamlit_app.py         # Streamlit UI
+│   ├── __init__.py              # Treats ui/ as a package for helper imports
+│   ├── components.py            # Streamlit helper functions (health checks, payloads, renderers)
+│   └── streamlit_app.py         # Streamlit UI layout + event wiring
 │
-├── tests/                        # Test Suite (22 tests)
+├── tests/                        # Test Suite (35 tests)
 │   ├── __init__.py
 │   ├── conftest.py              # Shared fixtures
 │   ├── pytest.ini               # Pytest config
@@ -1383,24 +1458,35 @@ LLM_Agent_Orchestration_HW1/
 │   ├── test_health_api.py       # Health endpoint (2)
 │   ├── test_config_settings.py  # Config tests (2)
 │   ├── test_ollama_client_unit.py     # Client unit tests (3)
+│   ├── test_streamlit_ui.py     # Streamlit AppTest scenarios (11)
 │   └── test_ollama_models_integration.py  # Integration (2)
 │
 ├── scripts/
 │   ├── preflight.py             # Environment validator
-│   └── check_langchain.py       # LangChain integration check
+│   ├── check_langchain.py       # LangChain integration check (requires requirements-optional)
+│   └── validate_notebooks.py    # Regression checks for notebook CSVs
 │
 ├── documentation/                # Comprehensive docs
 │   ├── PRD.md                   # Product requirements
 │   ├── Architecture.md          # System architecture
 │   ├── Installation_and_Testing.md  # Setup guide
 │   ├── Prompting_and_Developing.md  # Development process
-│   └── Screenshots_and_Demonstrations.md  # Visual docs
+│   ├── Screenshots_and_Demonstrations.md  # Visual docs
+│   ├── Parameter_Sensitivity_Analysis.md  # Experiment methodology
+│   ├── Extensibility_Guide.md    # Extension hooks
+│   └── screenshot_images/        # Referenced figures
+│
+├── notebooks/
+│   ├── Results_Analysis.ipynb    # Research visualizations & stats
+│   └── data/
+│       └── temperature_experiment.csv
 │
 ├── .env                         # Environment config (not in git)
 ├── .env.example                 # Template for .env
 ├── .gitignore                   # Git ignore rules
-├── requirements.txt             # Python dependencies
 ├── Makefile                     # Automation targets
+├── requirements.txt             # Core Python dependencies
+├── requirements-optional.txt    # Optional LangChain/notebook/tooling deps
 ├── CLAUDE.md                    # Claude Code AI guide
 └── README.md                    # This file
 ```
@@ -1419,17 +1505,22 @@ LLM_Agent_Orchestration_HW1/
 
 ## 📚 Documentation
 
-Comprehensive documentation is available:
+Use this documentation map as a master index—each link explains what it covers and the moment in the workflow when it helps most.
 
-| Document | Description | Audience |
-|----------|-------------|----------|
-| [README.md](README.md) | **This file** - Complete setup and usage guide | All users |
-| [CLAUDE.md](CLAUDE.md) | Guide for Claude Code AI assistant | AI assistants |
-| [Architecture.md](documentation/Architecture.md) | System design, data flow, security | Developers |
-| [Installation_and_Testing.md](documentation/Installation_and_Testing.md) | Detailed setup, test details | Ops/DevOps |
-| [PRD.md](documentation/PRD.md) | Product requirements | Product/Business |
-| [Prompting_and_Developing.md](documentation/Prompting_and_Developing.md) | AI-assisted dev process | Developers |
-| [Screenshots_and_Demonstrations.md](documentation/Screenshots_and_Demonstrations.md) | Visual walkthrough | End users |
+| Document | Purpose | When to read |
+|----------|---------|--------------|
+| [README.md](README.md) | Setup, run commands, validation checklist | First stop before cloning/running anything |
+| [AGENT_IMPLEMENTATION_PLAN.md](AGENT_IMPLEMENTATION_PLAN.md) | Mission-by-mission rubric alignment plan | When scoping new tasks or reporting progress |
+| [documentation/PRD.md](documentation/PRD.md) | Product goals, KPIs, assumptions, timeline | When confirming scope with stakeholders/grading rubric |
+| [documentation/Architecture.md](documentation/Architecture.md) | System diagram, data flow, security posture | Before modifying services, infra, or integrations |
+| [documentation/Installation_and_Testing.md](documentation/Installation_and_Testing.md) | Environment prep, pytest/coverage commands, troubleshooting | While setting up locally or validating submissions |
+| [documentation/Prompting_and_Developing.md](documentation/Prompting_and_Developing.md) | Prompt engineering approach and dev guardrails | When iterating on agent prompts or dev workflow |
+| [documentation/Screenshots_and_Demonstrations.md](documentation/Screenshots_and_Demonstrations.md) | UI walkthrough with annotated screenshots | When instructors need a visual verification |
+| [documentation/Parameter_Sensitivity_Analysis.md](documentation/Parameter_Sensitivity_Analysis.md) | Temperature/model experiments, CSV references + link to `scripts/validate_notebooks.py` | While tuning LLM parameters or citing experimentation |
+| [notebooks/Results_Analysis.ipynb](notebooks/Results_Analysis.ipynb) | Backing notebook for the parameter study *(needs `requirements-optional.txt`)* | After ingesting the analysis summary to reproduce figures |
+| [documentation/Extensibility_Guide.md](documentation/Extensibility_Guide.md) | Future roadmap, extension hooks, effort estimates | When planning extra credit or capstone enhancements |
+| [requirements-optional.txt](requirements-optional.txt) | Optional LangChain/notebook dependencies | Only when running notebooks or heavyweight tooling |
+| [CLAUDE.md](CLAUDE.md) | Claude-specific usage guide for this repo | Whenever an AI assistant is pairing on this project |
 
 ---
 
@@ -1628,8 +1719,8 @@ This project is provided **as-is for educational purposes** as part of the "LLMs
 ## 📈 Project Stats
 
 - **Total Lines of Code**: ~2,500 (excluding tests)
-- **Test Coverage**: ~85%
-- **Number of Tests**: 22 (20 unit + 2 integration)
+- **Test Coverage**: 89% (make coverage on 2025-11-12; UI AppTest suite covers guard rails + errors)
+- **Number of Tests**: 35 (33 unit + 2 integration)
 - **Documentation Pages**: 7
 - **Supported Models**: All Ollama models
 - **Supported Platforms**: macOS, Linux, Windows (WSL)

@@ -65,3 +65,40 @@ def test_chat_endpoint_handles_missing_model(monkeypatch, exp):
     assert r.status_code == 200
     assert "notice" in data
     assert "לא מותקן" in data["notice"]
+
+def test_temperature_parameter_passes_through(monkeypatch, exp):
+    """Ensures user-provided temperature reaches the Ollama client."""
+    import app.services.ollama_client as oc
+
+    monkeypatch.setattr(oc, "has_model", lambda name: True)
+    captured = {}
+
+    def fake_chat(messages, model=None, temperature=None, stream=False, timeout=60):
+        captured["temperature"] = temperature
+        return "TEMP-ANSWER"
+
+    monkeypatch.setattr(oc, "chat", fake_chat)
+
+    r = client.post(
+        "/api/chat",
+        headers=AUTH,
+        json={"messages": SAMPLE_MSG, "temperature": 0.65}
+    )
+    exp.expect("temperature parameter propagates to client and response succeeds")
+    exp.actual(f"status={r.status_code} temp={captured.get('temperature')}")
+    assert r.status_code == 200
+    assert captured["temperature"] == 0.65
+
+def test_ollama_unavailable_returns_503(monkeypatch, exp):
+    import app.services.ollama_client as oc
+
+    def fake_has_model(name):
+        raise oc.OllamaUnavailableError("connection refused")
+
+    monkeypatch.setattr(oc, "has_model", fake_has_model)
+
+    r = client.post("/api/chat", headers=AUTH, json={"messages": SAMPLE_MSG})
+    exp.expect("503 when Ollama unreachable instead of model-not-found notice")
+    exp.actual(f"status={r.status_code} body={r.json() if r.headers.get('content-type','').startswith('application/json') else r.text}")
+    assert r.status_code == 503
+    assert "Ollama" in r.json().get("detail", "")

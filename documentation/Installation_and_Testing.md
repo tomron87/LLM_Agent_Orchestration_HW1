@@ -53,20 +53,22 @@ source .venv/bin/activate
 ```bash
 pip install --upgrade pip
 pip install -r requirements.txt
+# Optional extras (LangChain, notebooks, torch, etc.)
+# pip install -r requirements-optional.txt
 ```
 
-> **Note**: `requirements.txt` uses flexible version specifications (e.g., `>=1.0.0`) to ensure compatibility across different environments and allow pip to resolve the best available versions. This makes the project more portable and maintainable.
+> **Note**: `requirements.txt` now contains only the core runtime/test stack for the FastAPI + Streamlit app. Install `requirements-optional.txt` if you plan to run the LangChain demo script, Jupyter notebooks, or any research extensions.
 
 ### 3) Configure .env file
 Create `.env` (or copy from `.env.example`) and configure:
 ```
-APP_API_KEY=my-local-token-123       # Required – your own access key (matching what's sent in request)
+APP_API_KEY=$(python -c "import secrets; print(secrets.token_hex(32))")  # Required – ≥32 chars, high entropy
 OLLAMA_HOST=http://127.0.0.1:11434   # Required – Ollama server address, usually not changed
 OLLAMA_MODEL=phi                     # Required – model name installed in Ollama (phi/mistral)
 API_URL=http://127.0.0.1:8000/api/chat   # Required for client – your FastAPI address (including /api/chat)
 
 ```
-> **Important**: Don't leave `APP_API_KEY=change-me`. Set some real value.
+> **Important**: Preflight fails unless `APP_API_KEY` is at least 32 characters *and* contains many unique characters. Generate compliant tokens with `python -c "import secrets; print(secrets.token_hex(32))"` and rotate them whenever you regenerate screenshots/logs.
 ---
 
 ## 🧪 Tests — Recommended Execution Order
@@ -87,10 +89,10 @@ python ./scripts/preflight.py
 ```
 Success criteria:
 - No `[FAIL]` lines in output.
-- `APP_API_KEY` is not placeholder.
+- `APP_API_KEY` is not placeholder and passes the length/entropy checks.
 - `OLLAMA_HOST` looks like valid URL.
 - (Optional) "Ollama reachable …" — healthy if server is running.
-- **(For UI)** `API_URL` defined in `.env` file — otherwise `streamlit_app.py` stops with appropriate error message.
+- **(For UI)** `API_URL` defined in `.env` file — otherwise `streamlit_app.py` (and its helpers in `ui/components.py`) stop with the guard-rail error message.
 
 
 If failed: fix according to printed instructions (Hints) and run again.
@@ -123,6 +125,8 @@ Following table details all unit tests in project, by file, each test's purpose,
 | `tests/test_chat_happy_errors_api.py` | `test_valid_token_with_mock` — Happy path: mocking `ollama_client.has_model=True` and `chat="MOCK-ANSWER"` | Status `200` and body `{"answer":"MOCK-ANSWER"}` | Ensure both `has_model` mocked to `True` (to not fall to `notice`), and `chat` mock returned; check endpoint returns answer |
 | `tests/test_chat_happy_errors_api.py` | `test_chat_when_client_raises_returns_5xx` — mocking exception from `ollama_client.chat` | Status `500/502` and body with `detail`/`error` | Mock `has_model=True` also to reach branch calling `chat`; in endpoint catch exceptions and map to `HTTPException(5xx)` |
 | `tests/test_chat_happy_errors_api.py` | `test_chat_endpoint_handles_missing_model` — model doesn't exist (`has_model=False`) | Status `200` with friendly `notice` field ("not installed…") and empty `answer` | That service/endpoint returns `notice` not error; message wording; don't try calling `chat` when no model |
+| `tests/test_chat_happy_errors_api.py` | `test_temperature_parameter_passes_through` — verifies user-provided `temperature` reaches the Ollama client | Status `200`; mock captures `temperature` value | Ensure `ChatRequest` → `ChatService` → `ollama_client.chat` all forward the parameter; update mocks if signature changes |
+| `tests/test_chat_happy_errors_api.py` | `test_ollama_unavailable_returns_503` — simulates Ollama server being offline | Status `503` with detail mentioning Ollama availability | Ensure `ollama_client.has_model` raises `OllamaUnavailableError` and API maps it to HTTP 503 |
 | `tests/test_health_api.py`            | `test_health_endpoint` — basic `/api/health` | Status `200` and JSON with keys `status`, `ollama` (and possibly `default_model`) | Function returns consistent structure whether server available/not; no Ollama dependency for basic 200 status |
 | `tests/test_health_api.py`            | `test_health_when_ping_fails_returns_structured_json` — `ping()` fails | Status `200` (or `503` per policy) with consistent JSON | Keep consistent body (fixed keys/message) even on failure; if chose 503 — update documentation/test |
 | `tests/test_config_settings.py`       | `test_settings_defaults_when_env_missing` — defaults when no ENV | Valid types/defaults: API key string, host starts `http`, model string | `config.py` loads dotenv; default values match document; no crash when `.env` missing |
@@ -130,6 +134,16 @@ Following table details all unit tests in project, by file, each test's purpose,
 | `tests/test_ollama_client_unit.py`    | `test_ollama_client_end_to_end_unit` — mocked unit: `ping()` success/fail, `chat()` URL/payload, 5xx → raise | `ping` returns `True/False` per mock; `chat` returns `"OK"` from `{"message":{"content":"OK"}}`; 5xx → exception | Ensure `requests.get/post` mocked; URL built from `OLLAMA_HOST` ending `/api/chat`; payload includes `model/messages/stream/options.temperature` |
 | `tests/test_ollama_client_unit.py`    | `test_has_model_handles_missing_models_key` — `/api/tags` missing `models` | Function returns `False` without exception | Robust handling when key missing; return `False` as default |
 | `tests/test_ollama_client_unit.py`    | `test_chat_timeout_raises_runtimeerror` — timeout/connection fails | Raise `RuntimeError` (or agreed exception) | In `chat()` catch `requests.Timeout/ConnectionError` and raise uniform `RuntimeError`; update test if exception name differs |
+| `tests/test_streamlit_ui.py`          | `test_streamlit_app_renders_without_errors` — ensures UI loads with required env vars | Title matches, no `st.error` rendered | Set env vars; mocked `requests` returns healthy status (covers both `streamlit_app.py` and `ui/components.py`) |
+| `tests/test_streamlit_ui.py`          | `test_streamlit_chat_submission_updates_history` — simulates chat send | History contains user+bot rows | Mocked `requests.post` returns answer; ensure `session_state` captured |
+| `tests/test_streamlit_ui.py`          | `test_streamlit_api_check_button_success` — sidebar health button reports toast ✅ | Toast message contains `API OK` | Health endpoint mock must return JSON with `ollama=True` |
+| `tests/test_streamlit_ui.py`          | `test_streamlit_api_check_button_failure` — sidebar health button toast ❌ on exception | Toast message contains `API health failed` | Raise exception from mocked `requests.get` |
+| `tests/test_streamlit_ui.py`          | `test_streamlit_chat_warns_when_api_down` — API health request raises | Warning contains "API לא זמין" | Mock `requests.get` to raise `RuntimeError` |
+| `tests/test_streamlit_ui.py`          | `test_streamlit_chat_warns_when_ollama_down` — health JSON shows `ollama=False` | Warning instructs to start Ollama | Health payload returns `{"ollama": False}` |
+| `tests/test_streamlit_ui.py`          | `test_streamlit_chat_warns_on_http_error` — chat POST returns 5xx | Warning surfaces server detail | Mock `requests.post` to return status ≥400 with `detail` |
+| `tests/test_streamlit_ui.py`          | `test_streamlit_chat_warns_on_notice` — chat response has `notice` text | Warning shows notice string | Mock payload `{"notice": "מודל לא מותקן"}` |
+| `tests/test_streamlit_ui.py`          | `test_streamlit_chat_warns_on_empty_answer` — answer empty, no notice | Warning says "לא החזיר תשובה" | Mock payload `{"answer": ""}` |
+| `tests/test_streamlit_ui.py`          | `test_streamlit_chat_handles_timeout` — POST raises `requests.exceptions.ReadTimeout` | Error message mentions timeout | Mock `requests.post` to raise timeout |
 
 **General Notes:**
 - All tests are true **unit tests (Unit)** — no dependency on real Ollama server; tests use `monkeypatch` to mock calls.
@@ -169,13 +183,44 @@ They test server availability (`ping`) and existence of locally installed models
   ollama pull mistral
   ```
 
-### 3) LangChain ↔️ Ollama Integration Test
-Helper file: `scripts/check_langchain.py`.
+### 3) Coverage Report — `make coverage`
+```bash
+make coverage
+# Internally runs: pytest --cov=app --cov=ui --cov-report=term-missing --cov-report=html
+```
+
+**What to expect:**
+- Pytest output for all **35 tests** (33 unit, 2 integration). Integration tests auto-skip when `ollama serve` is offline.
+- Terminal coverage summary plus HTML report under `htmlcov/index.html` (already ignored by git).
+
+**Latest measurement (2025-11-12, macOS, Python 3.11.10):**
+- 33 tests passed; 2 integration tests skipped because Ollama wasn't running locally.
+- Overall coverage: **89 %** (315 statements, 34 missed). `ui/streamlit_app.py` now sits at **91 %** thanks to the expanded Streamlit `AppTest` scenarios.
+- High-signal modules: `app/api/routers/chat.py` 96 %, `app/services/chat_service.py` 87 %, `app/services/ollama_client.py` 80 %.
+- Command total runtime: ~0.8 s without integration dependencies.
+
+Use this same command before submissions to capture up-to-date numbers for README/PRD KPI tables.
+
+### 4) LangChain ↔️ Ollama Integration Test
+Helper file: `scripts/check_langchain.py` (requires packages from `requirements-optional.txt`).
 Execution:
 ```bash
 python ./scripts/check_langchain.py
 ```
 Expected result: Printing short response from model. If fails — clear message received (e.g. about connection/model).
+
+### 5) Notebook Data Validation (research artifacts)
+Ensures CSV inputs used by `notebooks/Results_Analysis.ipynb` still match the documented schema.
+```bash
+python ./scripts/validate_notebooks.py
+```
+Success criteria:
+- `temperature_experiment.csv` exists with the exact expected columns
+- Exactly five rows (temperatures 0.0–1.0) with numeric values
+- Sample size column constant across rows
+- Script exits with code 0 (otherwise follow the `[FAIL]` hints)
+
+> Run this before packaging submissions so graders can trust the research artifacts without opening Jupyter.
 
 ---
 
@@ -225,7 +270,7 @@ curl -X POST "http://127.0.0.1:8000/api/chat"   -H "Content-Type: application/js
 ## 2) Running User Interface (Streamlit)
 
 ```bash
-streamlit run ./ui/streamlit_app.py
+streamlit run ./ui/streamlit_app.py  # imports helper logic from ui/components.py
 ```
 - Default: Streamlit tries to open browser automatically.
 - If it **doesn't open automatically**, enter manually to address:
@@ -259,6 +304,7 @@ Makefile wraps startup stages in order: **preflight → install → ollama → a
 | `make test` | Run all tests | Respects `pytest.ini` |
 | `make test-unit` | Unit tests | Equivalent to `pytest -m "not integration"` |
 | `make test-integration` | Run integration tests | Requires `@pytest.mark.integration` |
+| `make coverage` | Run pytest with coverage (`--cov=app --cov=ui --cov-report=term-missing --cov-report=html`) | Generates terminal summary + `htmlcov/index.html` |
 | `make all` | End-to-end execution | API in background, UI in foreground |
 | `make clean` | Clean Python cache | Optional |
 
@@ -292,4 +338,5 @@ markers = integration: tests that require a running local Ollama server
 - **Request body validation** – matches `tests/test_chat_validation_api.py` (empty/missing fields/invalid types).
 - **Happy path + exceptions** – matches `tests/test_chat_happy_errors_api.py` (mocking for response, 5xx on exceptions, notice).
 - **Ollama layer (mocked unit)** – `tests/test_ollama_client_unit.py` (URL/payload/timeout/errors) – **does not** require real server.
+- **Streamlit UI experience** – `tests/test_streamlit_ui.py` (AppTest covers UI load, API health button, guard-rails, notices, timeouts; exercises real layout with mocked `requests`).
 - **Integration tests against Ollama** – `tests/test_ollama_models_integration.py` (requires `ollama serve`; SKIPPED when not running).

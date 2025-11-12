@@ -1,18 +1,30 @@
 import os
-import time
+import sys
+from pathlib import Path
 import html
+
 import requests
 import streamlit as st
 from dotenv import load_dotenv, find_dotenv
-from datetime import datetime
-from streamlit.components.v1 import html as st_html
-from math import ceil
+
+# Ensure project root is on sys.path when Streamlit runs from ui/ directory.
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.append(str(ROOT_DIR))
+
+from ui.components import (
+    add_history_entry,
+    build_payload,
+    check_api_health,
+    render_history,
+)
 
 # ====== ENV ======
 load_dotenv(find_dotenv())
 API_URL = os.getenv("API_URL")
 APP_API_KEY = os.getenv("APP_API_KEY")
 DEFAULT_MODEL = os.getenv("OLLAMA_MODEL", "")
+DEFAULT_TEMPERATURE = float(os.getenv("DEFAULT_TEMPERATURE", "0.2"))
 DEBUG = False  # שנה ל-True אם תרצה לראות raw מה-API
 
 # ====== PAGE ======
@@ -180,10 +192,10 @@ with st.container():
     # כפתור בדיקה – התוצאה ב-toast כדי לא להזיז פריסה
     if st.button("בדיקת חיבור ל־API 🔧", key="api_check_btn"):
         try:
-            health = requests.get(API_URL.replace("/chat", "/health"), timeout=5).json()
+            health = check_api_health(API_URL)
             st.toast(f"API OK: {health}", icon="✅")
-        except Exception as e:
-            st.toast(f"API health failed: {e}", icon="❌")
+        except RuntimeError as err:
+            st.toast(f"API health failed: {err}", icon="❌")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ====== GUARD RAILS ======
@@ -205,6 +217,9 @@ if "model_choice" not in st.session_state:
         opts = [DEFAULT_MODEL] + base_opts if DEFAULT_MODEL else base_opts
     st.session_state.model_choice = opts[0] if opts else ""
 
+if "temperature" not in st.session_state:
+    st.session_state.temperature = DEFAULT_TEMPERATURE
+
 # ====== בוחר מודל ממורכז + נקה מימין (יחסית לחלון ההודעות) ======
 st.markdown('<div class="chat-shell">', unsafe_allow_html=True)
 
@@ -219,6 +234,18 @@ with st.container():
         key="model_select_centered"
     )
     st.markdown('</div>', unsafe_allow_html=True)
+
+    # Slider lets power users trade determinism for creativity without touching backend defaults.
+    st.session_state.temperature = st.slider(
+        "טמפרטורת יצירתיות (0 = מדויק, 1 = יצירתי)",
+        min_value=0.0,
+        max_value=1.0,
+        value=float(st.session_state.temperature),
+        step=0.05,
+        key="temperature_slider",
+        help="ערכים נמוכים → תשובות עקביות; ערכים גבוהים → יצירתיות אך פחות יציבות"
+    )
+    st.caption("0.0 = תשובה דטרמיניסטית ומהירה · 1.0 = תשובה יצירתית אך פחות צפויה")
 
     st.markdown('<div class="controls-row">', unsafe_allow_html=True)
     with st.container():
@@ -240,27 +267,21 @@ with st.form("chat_form", clear_on_submit=True):
 # ====== SEND ======
 if submit and user_msg.strip():
     headers = {"Authorization": f"Bearer {APP_API_KEY}", "Content-Type": "application/json"}
-    messages = [{"role": "user", "content": user_msg}]
-    payload = {"model": st.session_state.model_choice, "messages": messages, "stream": False}
+    payload = build_payload(
+        model=st.session_state.model_choice,
+        prompt=user_msg,
+        temperature=st.session_state.temperature,
+    )
 
-    st.session_state.history.append({"role": "user", "text": user_msg, "ts": datetime.now().strftime("%H:%M:%S")})
+    add_history_entry("user", user_msg)
 
     with st.spinner("המודל חושב…"):
-        t0 = time.perf_counter()
         try:
             # --- בדיקת מקור: קודם API, ואז מצב Ollama ---
             try:
-                h = requests.get(API_URL.replace("/chat", "/health"), timeout=3)
-                h.raise_for_status()
-                hdata = h.json()
-            except Exception as he:
-                # API לא זמין = בעיית מקור; מציגים רק את זו ועוצרים
-                st.warning(f"⚠️ API לא זמין: {he}")
-                raise SystemExit
-
-            # אם ה-API חי אבל Ollama לא זמין – בעיית מקור
-            if not hdata.get("ollama", False):
-                st.warning("⚠️ שרת Ollama לא זמין/כבוי. הפעל את Ollama ונסה שוב.")
+                check_api_health(API_URL, timeout=3, require_ollama=True)
+            except RuntimeError as err:
+                st.warning(str(err))
                 raise SystemExit
 
             # --- במצב תקין ממשיכים לשלוח את בקשת /chat ---
@@ -293,11 +314,7 @@ if submit and user_msg.strip():
                 raise SystemExit
 
             # הצלחה: מוסיפים לבוט להיסטוריה
-            st.session_state.history.append({
-                "role": "bot",
-                "text": ans,
-                "ts": datetime.now().strftime("%H:%M:%S")
-            })
+            add_history_entry("bot", ans)
 
         except requests.exceptions.ReadTimeout:
             st.error("⏳ בקשת הצ'אט חצתה את מגבלת הזמן (timeout). שקלו להגדיל timeout או לבדוק את זמני התגובה.")
@@ -307,79 +324,5 @@ if submit and user_msg.strip():
         except Exception as e:
             st.error(f"שגיאה: {e}")
 
-# ====== HELPERS ======
-def render_user(text: str, ts: str):
-    safe = html.escape(text)
-    st.markdown(f"""
-<div class='chat-shell'>
-  <div class='bubble-wrap'>
-    <!-- זמן מעל הבועה -->
-    <div class='ts' style="width:100%;text-align:center;font-size:.85rem;opacity:.85;margin:6px 0 10px;">
-      {html.escape(ts)}
-    </div>
-    <div class='msg-user'>🧑‍💻 {safe}</div>
-  </div>
-</div>
-""", unsafe_allow_html=True)
-
-
-def render_bot(text: str, ts: str, idx: int):
-    safe_text = (text.replace("&", "&amp;")
-                      .replace("<", "&lt;")
-                      .replace(">", "&gt;"))
-
-    from math import ceil
-    rows = max(3, min(40, ceil(len(text) / 48) + text.count("\n") + 1))
-    height = 98 + rows * 26  # מרווח קטן לטיימסטמפ שמעל
-
-    html_block = f"""
-<div style="max-width:980px;margin:1.2rem auto;position:relative;">
-  <div style="width:86%;margin:0 auto;position:relative;">
-    <!-- זמן מעל הבועה (בתוך iframe חייבים להגדיר צבע) -->
-    <div style="width:100%;text-align:center;font-size:.85rem;opacity:.85;margin:6px 0 10px; color:#e6e8f0;">
-      {ts}
-    </div>
-
-    <!-- כפתור העתק משמאל, ממורכז אנכית -->
-    <div style="position:absolute;top:50%;left:-8px;transform:translate(-100%,-50%);z-index:1;">
-      <button
-        style="font-size:.95rem;padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.25);
-               background:rgba(255,255,255,.08);color:#fff;cursor:pointer;min-width:72px;"
-        onclick="(async () => {{
-          try {{
-            const area = document.getElementById('copy_src_{idx}');
-            const txt = area.value;
-            if (navigator.clipboard && window.isSecureContext) {{
-              await navigator.clipboard.writeText(txt);
-            }} else {{
-              area.focus(); area.select(); document.execCommand('copy'); area.blur();
-            }}
-            this.textContent = 'הועתק ✔';
-            setTimeout(() => {{ this.textContent = 'העתק'; }}, 1200);
-          }} catch (e) {{
-            this.textContent = 'נכשל ✖';
-            setTimeout(() => {{ this.textContent = 'העתק'; }}, 1200);
-          }}
-        }})()"
-      >העתק</button>
-    </div>
-
-    <!-- בועת הבוט -->
-    <div style="background:rgba(100,140,255,.12);border:1px solid rgba(120,160,255,.18);
-                padding:12px 14px;border-radius:14px;margin:8px 0;color:#e6e8f0;direction:rtl;">
-      🤖 {safe_text}
-    </div>
-
-    <!-- מקור טקסט להעתקה (חבוי לגמרי) -->
-    <textarea id="copy_src_{idx}" style="position:absolute;left:-9999px;height:0;overflow:hidden;">{safe_text}</textarea>
-  </div>
-</div>
-"""
-    st_html(html_block, height=height)
-
 # ====== HISTORY ======
-for i, item in enumerate(st.session_state.history):
-    if item["role"] == "user":
-        render_user(item["text"], item["ts"])
-    else:
-        render_bot(item["text"], item["ts"], i)
+render_history(st.session_state.history)

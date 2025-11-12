@@ -155,7 +155,9 @@ def chat_endpoint(
         result = service.process_chat(
             messages=messages_dict,
             model=req.model,
-            session_id=req.session_id
+            session_id=req.session_id,
+            temperature=req.temperature,
+            stream=req.stream
         )
 
         # Return response (service already formatted it correctly)
@@ -167,6 +169,13 @@ def chat_endpoint(
         raise HTTPException(
             status_code=404,
             detail=f"Model '{e.model}' not found. Install with: ollama pull {e.model}"
+        )
+
+    except ollama_client.OllamaUnavailableError as e:
+        logger.error("Ollama server unavailable during chat request")
+        raise HTTPException(
+            status_code=503,
+            detail=f"Ollama server unavailable: {str(e)}"
         )
 
     except Exception as e:

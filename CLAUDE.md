@@ -38,6 +38,7 @@ make ui
 # or with custom port:
 make ui STREAMLIT_PORT=8501
 streamlit run ui/streamlit_app.py --server.port 8501
+# UI layout is in ui/streamlit_app.py; helper logic (health checks, payload builder, history renderer) lives in ui/components.py
 
 # Run everything (preflight -> install -> ollama -> api in bg -> ui in fg)
 make all
@@ -74,20 +75,25 @@ make clean
 
 ### Three-Layer Architecture
 
-1. **API Layer** (`app/api/routers/chat.py`)
+1. **UI Layer** (`ui/streamlit_app.py` + `ui/components.py`)
+   - Streamlit layout/events live in `streamlit_app.py`
+   - Non-visual helpers (health checks, payload builder, history renderer) live in `components.py`
+   - Keeps Streamlit under the single-responsibility rubric while sharing code with tests
+
+2. **API Layer** (`app/api/routers/chat.py`)
    - HTTP routing and request/response handling
    - Pydantic schemas for validation (`ChatMessage`, `ChatRequest`, `ChatResponse`)
    - Bearer token authentication via `app/api/deps.py`
    - Maps business exceptions to HTTP status codes
 
-2. **Business Logic Layer** (`app/services/chat_service.py`)
+3. **Business Logic Layer** (`app/services/chat_service.py`)
    - Model selection and validation
    - Message processing
    - Response formatting with notices for edge cases
    - Session ID generation
    - Returns structured responses with `session_id`, `answer`, `model`, and optional `notice`
 
-3. **Infrastructure Layer** (`app/services/ollama_client.py`)
+4. **Infrastructure Layer** (`app/services/ollama_client.py`)
    - HTTP communication with Ollama server
    - Functions: `ping()`, `has_model(model_name)`, `chat(messages, model, ...)`
    - Error handling for network/timeout/HTTP issues
@@ -155,40 +161,59 @@ All configuration is loaded from environment variables via `app/core/config.py`:
 ## File Structure
 
 ```
-app/
-├── main.py                      # FastAPI app initialization, CORS, router registration
-├── core/config.py               # Environment variable loading and validation
-├── api/
-│   ├── deps.py                  # Authentication dependency (require_api_key)
-│   └── routers/chat.py          # Chat endpoint routing and HTTP layer
-└── services/
-    ├── chat_service.py          # Business logic (ChatService class)
-    └── ollama_client.py         # Ollama HTTP client (ping, has_model, chat)
-
-ui/
-└── streamlit_app.py             # Streamlit chat interface
-
-tests/
-├── conftest.py                  # Shared fixtures and test formatting hooks
-├── pytest.ini                   # Pytest configuration (markers, etc.)
-├── test_auth_api.py             # Bearer token authentication tests
-├── test_health_api.py           # Health endpoint tests
-├── test_chat_validation_api.py  # Request validation tests
-├── test_chat_happy_errors_api.py # Error handling and edge cases
-├── test_config_settings.py      # Configuration loading tests
-├── test_ollama_client_unit.py   # Unit tests for OllamaClient (mocked)
-└── test_ollama_models_integration.py # Integration tests (requires Ollama)
-
-scripts/
-├── preflight.py                 # Environment validation script
-└── check_langchain.py           # LangChain dependency checker
-
-documentation/                    # Detailed documentation in Hebrew
-├── PRD.md                       # Product requirements
-├── Architecture.md              # Architecture details
-├── Installation_and_Testing.md  # Setup and testing guide
-├── Prompting_and_Developing.md  # Development process documentation
-└── Screenshots_and_Demonstrations.md # UI screenshots
+LLM_Agent_Orchestration_HW1/
+├── app/
+│   ├── main.py
+│   ├── api/
+│   │   ├── deps.py
+│   │   └── routers/chat.py
+│   ├── core/config.py
+│   └── services/
+│       ├── chat_service.py
+│       └── ollama_client.py
+│
+├── ui/
+│   ├── __init__.py
+│   ├── components.py
+│   └── streamlit_app.py
+│
+├── tests/
+│   ├── conftest.py
+│   ├── pytest.ini
+│   ├── test_auth_api.py
+│   ├── test_chat_validation_api.py
+│   ├── test_chat_happy_errors_api.py
+│   ├── test_health_api.py
+│   ├── test_config_settings.py
+│   ├── test_ollama_client_unit.py
+│   ├── test_streamlit_ui.py
+│   └── test_ollama_models_integration.py
+│
+├── scripts/
+│   ├── preflight.py
+│   ├── check_langchain.py
+│   └── validate_notebooks.py
+│
+├── documentation/
+│   ├── PRD.md
+│   ├── Architecture.md
+│   ├── Installation_and_Testing.md
+│   ├── Prompting_and_Developing.md
+│   ├── Screenshots_and_Demonstrations.md
+│   ├── Parameter_Sensitivity_Analysis.md
+│   ├── Extensibility_Guide.md
+│   └── screenshot_images/
+│
+├── notebooks/
+│   ├── Results_Analysis.ipynb
+│   └── data/
+│       └── temperature_experiment.csv
+│
+├── requirements.txt
+├── requirements-optional.txt
+├── .env / .env.example
+├── Makefile
+└── README.md
 ```
 
 ## Development Workflow
@@ -220,9 +245,67 @@ documentation/                    # Detailed documentation in Hebrew
 - **Authentication Errors**: Verify `APP_API_KEY` is set in `.env` and matches the Bearer token in requests
 - **Test Failures**: Unit tests should never require external services; if they do, mark with `@pytest.mark.integration`
 
+## Recent Enhancements (November 2025)
+
+The following documentation and analysis components were added to meet academic requirements and demonstrate professional software engineering practices:
+
+### Research & Analysis Components (Mission 1)
+- **Parameter_Sensitivity_Analysis.md**: Comprehensive analysis of temperature, model selection, and timeout parameters with experimental results and recommendations
+- **notebooks/Results_Analysis.ipynb**: Jupyter notebook with visualizations (matplotlib/seaborn), statistical analysis, and LaTeX formulas demonstrating data-driven decision making
+
+### PRD Enhancements (Mission 2)
+- **KPIs & Success Metrics (Section 2.1)**: Technical, UX, and development KPIs with actual status tracking (all ✅ achieved)
+- **Stakeholders Analysis (Section 1.1)**: Identified 5 key stakeholder groups with their interests
+- **User Stories (Section 1.2)**: 6 complete user stories with acceptance criteria, priorities, and implementation status
+- **Use Cases (Section 1.3)**: 5 detailed use case workflows covering happy path, error recovery, and setup scenarios
+
+### Architecture Decision Records (Mission 3)
+Added to **Architecture.md**:
+- **ADR-001**: Three-Layer Architecture Pattern
+- **ADR-002**: Bearer Token Authentication
+- **ADR-003**: Local-Only LLM with Ollama
+- **ADR-004**: Pydantic for Request/Response Validation
+- **ADR-005**: pytest with Mocking for Unit Tests
+- **ADR-006**: Environment Variables for Configuration
+- **ADR-007**: Streamlit for UI (Not Custom React/Vue)
+
+### C4 Model Diagrams (Mission 4)
+Added to **Architecture.md**:
+- **Level 1: System Context Diagram** - Big picture view with user, system, and Ollama
+- **Level 2: Container Diagram** - Shows Streamlit UI, FastAPI Backend, Configuration, and Ollama
+- **Level 3: Component Diagram** - Internal structure of FastAPI backend (6 components with file paths)
+- **Level 4: Deployment Diagram** - Physical deployment on local machine with all processes
+- **Bonus: Data Flow Through Layers** - 8-step request/response flow with error handling
+
+### Extensibility Guide (Mission 5)
+Created **Extensibility_Guide.md** with:
+- **5 Extension Points**: New model providers, custom middleware, response processors, Pydantic validators, auth extensions
+- **5 Future Extensions**: RAG, streaming responses, conversation history, multi-model routing, observability
+- **Complete Code Examples**: Ready-to-use implementations for each extension point
+- **Maintenance Guidelines**: Best practices for extending the system
+
+### Cross-References Updated
+- **README.md**: Updated "Adding New Features" section to reference Extensibility Guide, updated Documentation table with 3 new files
+- **PRD.md**: Updated Future Extensions with detailed feature list and reference to Extensibility Guide, updated Summary with complete documentation suite (10 files)
+
+**Total Documentation**: 10 comprehensive files covering requirements, architecture, testing, research, analysis, and extensibility.
+
+---
+
 ## Documentation
 
-Comprehensive documentation is in the `documentation/` directory (mostly in Hebrew). Key files:
-- **Architecture.md**: Detailed system architecture, data flow, security, and future extensions
+Comprehensive documentation is in the `documentation/` directory. Key files:
+
+**Core Documentation:**
+- **Architecture.md**: System architecture, C4 diagrams (4 levels), ADRs, data flow, security, cost analysis
 - **Installation_and_Testing.md**: Complete setup instructions and testing procedures
-- **PRD.md**: Product requirements and system goals
+- **PRD.md**: Product requirements, KPIs, stakeholders, user stories, acceptance criteria
+- **Prompting_and_Developing.md**: AI-assisted development process documentation
+- **Screenshots_and_Demonstrations.md**: Visual walkthrough with UI screenshots
+
+**Research & Analysis:**
+- **Parameter_Sensitivity_Analysis.md**: Temperature, model, timeout experiments with recommendations
+- **Results_Analysis.ipynb** (in `notebooks/`): Jupyter notebook with visualizations and statistical analysis
+
+**Extensibility:**
+- **Extensibility_Guide.md**: Extension points, hooks, and complete implementation guides for adding features
