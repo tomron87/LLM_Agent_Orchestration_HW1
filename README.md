@@ -1510,7 +1510,6 @@ Use this documentation map as a master index—each link explains what it covers
 | Document | Purpose | When to read |
 |----------|---------|--------------|
 | [README.md](README.md) | Setup, run commands, validation checklist | First stop before cloning/running anything |
-| [AGENT_IMPLEMENTATION_PLAN.md](AGENT_IMPLEMENTATION_PLAN.md) | Mission-by-mission rubric alignment plan | When scoping new tasks or reporting progress |
 | [documentation/PRD.md](documentation/PRD.md) | Product goals, KPIs, assumptions, timeline | When confirming scope with stakeholders/grading rubric |
 | [documentation/Architecture.md](documentation/Architecture.md) | System diagram, data flow, security posture | Before modifying services, infra, or integrations |
 | [documentation/Installation_and_Testing.md](documentation/Installation_and_Testing.md) | Environment prep, pytest/coverage commands, troubleshooting | While setting up locally or validating submissions |
